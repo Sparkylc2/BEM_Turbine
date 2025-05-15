@@ -128,7 +128,8 @@ add_executable(BEM_Turbine src/main.cpp
         src/rotor.cpp
         src/xfoil_hook.cpp
         include/viterna_extrapolator.h
-        include/solidworks_hook.h
+        include/fusion_hook.h
+        include/bem_corrections.h
 )
 
 

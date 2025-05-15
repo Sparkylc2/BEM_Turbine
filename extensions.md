@@ -1,11 +1,8 @@
 Extension Checklist
 
-- [ ] Inclusion of aerofoil Drag Forces
-- [ ] Glauert's optimum rotor accoutning for wake rotation (tangential induction factor a') using Euler's turbine equation
+- [x] Inclusion of aerofoil Drag Forces
 - [x] Tip loss correction via Prandtl's tip-loss factor
-- [x] Root-loss correction
-- [ ] Glauert's empirical axial induction factor correction
-- [ ] Snel et al.'s stall delay correction
-- [ ] Glauert's/Prandtl's mach correction
-- [ ] Reynolds number Cd correction
-- [ ] Du-Selig correction
+- [x] Root-loss correction via Prandtl's root-loss factor
+- [x] Glauert's empirical axial induction factor correction
+- [ ] Du-Snelig et al.'s stall delay correction 
+- [x] Karman/Tsien mach correction

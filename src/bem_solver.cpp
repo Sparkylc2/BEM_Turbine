@@ -102,31 +102,6 @@ double solve_phi_with_retries(
         catch (...) {/* swallow and try next seed */}
     }
 
-    // const double phi_lo = 0.01;
-    // const double phi_hi = M_PI - 0.01;
-    // const int    Nscan  = 800;
-    //
-    // double x_prev = phi_lo;
-    // double f_prev = f(blade, x_prev);
-    //
-    // double best_x = x_prev;
-    // double best_f = std::fabs(f_prev);
-    //
-    // for (int i = 1; i <= Nscan; ++i)
-    // {
-    //     const double x = phi_lo + (phi_hi - phi_lo) * i / Nscan;
-    //     const double f_cur = f(blade, x);
-    //
-    //     if (std::fabs(f_cur) < best_f) { best_f = std::fabs(f_cur); best_x = x; }
-    //
-    //     x_prev = x;
-    //     f_prev = f_cur;
-    // }
-    //
-    // const double kTolLoose = 1e-4;
-    // if (best_f < kTolLoose)
-    //     return best_x;
-
     throw std::runtime_error(
         "solve_phi_with_retries: could not bracket or approximate a root in (0,π)");
 }
@@ -143,56 +118,49 @@ double BEMSolver::numerical_derivative(const BladeSection& blade,
 }
 
 
-void BEMSolver::run_bem_solver(BladeSection& blade, bool /*eps_all*/)
-{
-    std::cout << "Running BEM solver for blade section at radius: "
-              << unit_cast<double>(blade.g_radial_pos()) << " m\n";
+void BEMSolver::run_bem_solver(BladeSection& blade) {
+    std::cout << "Running BEM solver for blade section at radius: " << blade.g_radial_pos() << "\n";
 
-    const double r     = blade.g_radial_pos().value();
 
-    auto f  = [](BladeSection& b, double x)
-              { return compute_residual(b, radian_t(x)).value(); };
+    auto f  = [](const BladeSection& b, const radian_t phi) { return compute_residual(b, phi).value(); };
 
-    auto df = [](BladeSection& b, double x)
-              { return numerical_derivative(b, x, 1e-6); };
+    auto df = [](const BladeSection& b, const radian_t phi) { return numerical_derivative(b, phi, 1e-6); };
 
-    const double phi = solve_phi_with_retries(blade, f, df);
-    const double sin_phi = std::sin(phi);
-    const double cos_phi = std::cos(phi);
+    const radian_t phi = solve_phi_with_retries(blade, f, df);
+    const auto [sin_phi, cos_phi] = Helpers::get_clamped_phi_components(phi);
 
-    blade.update_alpha(radian_t(phi));
+    blade.update_alpha(phi);
     blade.update_cl_cd();
 
-    const double cl = blade.g_cl().value();
-    const double cd = blade.g_cd().value();
+    dimensionless_t c_l = blade.g_cl().value();
+    dimensionless_t c_d = blade.g_cd().value();
 
-    const double cn = cl * cos_phi - cd * sin_phi;
-    const double ct = cl * sin_phi + cd * cos_phi;
+    /* ----------- KARMAN-TSIEN MACH CORRECTION  ----------- */
+    BEMCorrections::karman_tsein_mach_correction(blade, c_l);
+    /* ----------------------------------------------------- */
 
-    const double B      = blade.parent_rotor.g_num_blades().value();
-    const double R      = blade.parent_rotor.g_rotor_radius().value();
-    const double R_hub  = blade.parent_rotor.g_rotor_hub_radius().value();
-    const double F_tip  = 2.0 / M_PI *
-                          std::acos(std::exp(-B * (R - r) /
-                                            (2.0 * r * std::fabs(sin_phi))));
-    const double F_root = 2.0 / M_PI *
-                          std::acos(std::exp(-B * (r - R_hub) /
-                                            (2.0 * r * std::fabs(sin_phi))));
-    const double F      = std::max(1e-4, F_tip * F_root);
 
-    const double sigma_r = blade.g_local_solidity().value();
+    const dimensionless_t c_n = c_l * cos_phi - c_d * sin_phi;
+    const dimensionless_t c_t = c_l * sin_phi + c_d * cos_phi;
 
-    double a = sigma_r * cn /
-               (4.0 * F * sin_phi * sin_phi + sigma_r * cn);
-    if (a > 0.40)
-    {
-        const double CT = 4.0 * F * a * (1.0 - a);
-        a = 0.5 * (2.0 + CT * (1.0 - 2.0/3.0) -
-                   std::sqrt(std::pow(2.0 + CT * (1.0 - 2.0/3.0), 2.0) +
-                             4.0 * (CT/3.0 - 1.0)));
-    }
 
-    const double a_prime = 1.0 / (4.0 * F * sin_phi * cos_phi / (sigma_r * ct) - 1.0);
+    dimensionless_t F = 1.0;
+
+    /* ----------- PRANDTL TIP & ROOT CORRECTION ----------- */
+    BEMCorrections::prandtl_tip_root(F, blade, phi);
+    /* ----------------------------------------------------- */
+
+
+    const dimensionless_t sigma_r = blade.g_local_solidity();
+
+    dimensionless_t a = sigma_r * c_n / (4.0 * F * sin_phi * sin_phi + sigma_r * c_n);
+
+    /* ------ GLAUERT-BUHL AXIAL INDUCTION CORRECTION ------ */
+    BEMCorrections::glauert_buhl_axial_induction(a, F);
+    /* ----------------------------------------------------- */
+
+
+    const dimensionless_t a_prime = 1.0 / (4.0 * F * sin_phi * cos_phi / (sigma_r * c_t) - 1.0);
 
     blade.update_induction_factors(dimensionless_t(a),
                                    dimensionless_t(a_prime));
@@ -202,57 +170,47 @@ void BEMSolver::run_bem_solver(BladeSection& blade, bool /*eps_all*/)
 
 
 
-dimensionless_t BEMSolver::compute_residual(const BladeSection& blade_ref,
-                                            const radian_t&     phi)
-{
-    BladeSection blade = blade_ref;
+std::pair<dimensionless_t, dimensionless_t> BEMSolver::perform_blade_iteration(BladeSection &blade, const radian_t& phi) {
 
-    // ---------- basic kinematics ------------------------------------------------
-    const double V_inf   = blade.parent_rotor.g_wind_speed().value();
-    const double r       = blade.g_radial_pos().value();
-    const double Omega   = blade.g_angular_vel().value();
-    const double lambda_r = (Omega * r) / V_inf;
+    const auto [sin_phi, cos_phi] = Helpers::get_clamped_phi_components(phi);
 
-    const double sphi = std::sin(phi.value());
-    const double cphi = std::cos(phi.value());
-
-    const double s = std::copysign(std::max(std::fabs(sphi), 1e-3), sphi);
-    const double c = std::copysign(std::max(std::fabs(cphi), 1e-3), cphi);
-
-    // ---------- aerodynamic coefficients ----------------------------------------
     blade.update_alpha(phi);
     blade.update_cl_cd();
 
-    const double cl = blade.g_cl().value();
-    const double cd = blade.g_cd().value();
+    dimensionless_t c_l = blade.g_cl().value();
+    dimensionless_t c_d = blade.g_cd().value();
+    /* ----------- KARMAN-TSIEN MACH CORRECTION  ----------- */
+    BEMCorrections::karman_tsein_mach_correction(blade, c_l);
+    /* ----------------------------------------------------- */
 
-    const double cn = cl * c - cd * s;
-    const double ct = cl * s + cd * c;
+    
+    dimensionless_t c_n = c_l * cos_phi - c_d * sin_phi;
+    dimensionless_t c_t = c_l * sin_phi + c_d * cos_phi;
 
-    // ---------- prandtl loss factors --------------------------------------------
-    const double B     = blade.parent_rotor.g_num_blades().value();
-    const double R     = blade.parent_rotor.g_rotor_radius().value();
-    const double Rhub  = blade.parent_rotor.g_rotor_hub_radius().value();
+    scalar_t F = 1.0;
+    /* ----------- PRANDTL TIP & ROOT CORRECTION ----------- */
+    BEMCorrections::prandtl_tip_root(F, blade, phi);
+    /* ----------------------------------------------------- */
 
-    const double Ftip  = 2.0/M_PI * std::acos(std::exp(-B*(R - r)/(2.0*r*std::fabs(s))));
-    const double Froot = 2.0/M_PI * std::acos(std::exp(-B*(r - Rhub)/(2.0*r*std::fabs(s))));
-    const double F = std::max(1e-4, Ftip * Froot);
+    const dimensionless_t local_solidity = blade.g_local_solidity();
 
-    const double sigma_r = blade.g_local_solidity().value();
+    dimensionless_t a   = local_solidity * c_n / (4.0 * F * sin_phi * sin_phi + local_solidity * c_n);
+    dimensionless_t a_p = local_solidity * c_t / (4.0 * F * sin_phi * cos_phi - local_solidity * c_t);
 
-
-
-    // ---------- induction factors (with glauerts) --------------------------------
-    double a  = sigma_r * cn / (4.0*F*s*s + sigma_r*cn);
-    if (a > 0.40) {
-        const double CT = 4.0*F*a*(1.0 - a);
-        a = 0.5*(2.0 + CT*(1.0 - 2.0/3.0)
-              - std::sqrt(std::abs(std::pow(2.0 + CT*(1.0 - 2.0/3.0),2) + 4.0*(CT/3.0 - 1.0))));
-    }
-    const double a_p = 1.0 /(4.0 * F * s * c / (sigma_r * ct) - 1.0);
+    /* ------ GLAUERT-BUHL AXIAL INDUCTION CORRECTION ------ */
+    BEMCorrections::glauert_buhl_axial_induction(a, F);
+    /* ----------------------------------------------------- */
+    return {a, a_p};
+}
 
 
-    // ---------- residual ---------------------------------------------------------
-    const double res = std::sin(phi.value()) / (1.0 - a) - std::cos(phi.value()) / (lambda_r * (1.0 + a_p));
-    return dimensionless_t(res);
+
+
+scalar_t BEMSolver::compute_residual(const BladeSection& blade_ref, const radian_t& phi) {
+    
+    BladeSection blade = blade_ref;
+
+    const auto [sin_phi, cos_phi] = Helpers::get_clamped_phi_components(phi);
+    const auto [a, a_p] = perform_blade_iteration(blade, phi);
+    return sin_phi / (1.0 - a) - cos_phi / (blade.g_local_tsr() * (1.0 + a_p));
 }

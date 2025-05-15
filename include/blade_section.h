@@ -97,7 +97,7 @@ public:
     [[nodiscard]] angular_velocity::radians_per_second_t const& g_angular_vel() const { return angular_velocity; }
     [[nodiscard]] dimensionless_t const& g_non_dim_radius() const { return non_dim_radius; }
     [[nodiscard]] radian_t const& g_twist_angle() const { return twist_angle; }
-    [[nodiscard]] dimensionless_t const& g_local_tip_speed_ratio() const { return local_tip_speed_ratio; }
+    [[nodiscard]] dimensionless_t const& g_local_tsr() const { return local_tip_speed_ratio; }
     [[nodiscard]] std::string const& g_naca_code() const { return naca_code; }
     [[nodiscard]] dimensionless_t const& g_local_solidity() const { return local_solidity; }
     [[nodiscard]] dimensionless_t const& g_cl() const { return cl; }

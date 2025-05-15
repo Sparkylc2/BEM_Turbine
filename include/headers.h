@@ -48,7 +48,6 @@
 #include <stdexcept>
 #include <cmath>
 
-#include <atlbase.h>
 
 
 // ---------------------------------
@@ -56,8 +55,13 @@
 //---------------------------------
 #include <units.h>
 #include <nlohmann/json.hpp>
-#import <sldworks.tlb> raw_interfaces_only named_guids
-#import <swconst.tlb>  raw_interfaces_only named_guids
+
+// #include <Core/CoreAll.h>
+// #include <Fusion/FusionAll.h>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <cmath>
 
 
 
@@ -68,7 +72,7 @@
 #include "helpers.h"
 #include "xfoil_hook.h"
 #include "viterna_extrapolator.h"
-
+#include "bem_corrections.h"
 
 #include "blade_section.h"
 #include "rotor.h"
