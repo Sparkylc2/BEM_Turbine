@@ -16,11 +16,11 @@ using namespace units::velocity;
 class Rotor;
 
 class BladeSection {
+
     xf::Config cfg;
 
     std::string naca_code;
 
-    // xf::AirfoilTable& airfoil_data_table;
 
     meter_t radial_position;
     dimensionless_t non_dim_radius;
@@ -32,8 +32,8 @@ class BladeSection {
     dimensionless_t local_tip_speed_ratio;
     dimensionless_t local_solidity;
 
-    dimensionless_t cl;
-    dimensionless_t cd;
+    dimensionless_t c_l;
+    dimensionless_t c_d;
 
     dimensionless_t c_n;
     dimensionless_t c_t;
@@ -91,7 +91,7 @@ public:
     void set_differential_torque(newton_meter_t dT) { this -> differential_torque = dT; }
 
     // getters
-    meter_t const& g_chord_len() const { return chord_length; }
+    [[nodiscard]] meter_t const& g_chord_len() const { return chord_length; }
     [[nodiscard]] meter_t const& g_radial_pos() const { return radial_position; }
     [[nodiscard]] radian_t const& g_angular_pos() const { return angular_position; }
     [[nodiscard]] angular_velocity::radians_per_second_t const& g_angular_vel() const { return angular_velocity; }
@@ -100,8 +100,8 @@ public:
     [[nodiscard]] dimensionless_t const& g_local_tsr() const { return local_tip_speed_ratio; }
     [[nodiscard]] std::string const& g_naca_code() const { return naca_code; }
     [[nodiscard]] dimensionless_t const& g_local_solidity() const { return local_solidity; }
-    [[nodiscard]] dimensionless_t const& g_cl() const { return cl; }
-    [[nodiscard]] dimensionless_t const& g_cd() const { return cd; }
+    [[nodiscard]] dimensionless_t const& g_cl() const { return c_l; }
+    [[nodiscard]] dimensionless_t const& g_cd() const { return c_d; }
     [[nodiscard]] radian_t const& g_alpha() const { return alpha; }
     [[nodiscard]] dimensionless_t const& g_a() const { return a; }
     [[nodiscard]] dimensionless_t const& g_a_prime() const { return a_prime; }

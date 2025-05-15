@@ -17,6 +17,7 @@ using namespace units::volume;
 using namespace units::density;
 using namespace units::pressure;
 using namespace units::time;
+using namespace units::power;
 
 class BladeSection;
 
@@ -32,14 +33,18 @@ class Rotor {
     angular_velocity::radians_per_second_t angular_velocity = 0.0_rad_per_s;
     std::vector<BladeSection> blade_sections;
 
-
     newton_t drag = 0.0_N;
     newton_meter_t torque = 0.0_Nm;
 
+    watt_t total_power = watt_t(0.0);
+    watt_t produced_power = watt_t(0.0);
+    dimensionless_t cp = dimensionless_t(0.0);
 
-    void initialize_rotor();
+
+
+
+    void init_blade_sections(nlohmann::json& j);
     nlohmann::json load_rotor_json();
-
 
 
 
@@ -52,7 +57,9 @@ public:
     const meters_per_second_t speed_of_sound = 343.0_mps;
 
 
-    explicit Rotor(std::string name) : rotor_name{std::move(name)} { initialize_rotor(); }
+    explicit Rotor(std::string name) : rotor_name{std::move(name)} {}
+    void initialize_rotor();
+    void initialize_rotor(double tsr);
     void save_rotor_json(const std::string& filename) const;
     void run_bem();
 
@@ -65,6 +72,14 @@ public:
     const meters_per_second_t& g_wind_speed() const { return wind_speed; }
     const angular_velocity::radians_per_second_t& g_angular_velocity() const { return angular_velocity; }
     const meter_t& g_rotor_hub_radius() const { return rotor_hub_radius; }
+
+    const newton_meter_t& g_torque() const { return torque; }
+    const newton_t& g_drag() const { return drag; }
+
+    const watt_t& g_total_power() const { return total_power; }
+    const watt_t& g_produced_power() const { return produced_power; }
+    const dimensionless_t& g_c_p() const { return cp; }
+
 
 
 

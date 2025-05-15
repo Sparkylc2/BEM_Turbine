@@ -3,7 +3,7 @@
     {"naca": "0012", "radial_pos_m": 0.2, "chord_len_m": 0.7,         "twist_rad": 0.506145483},
     {"naca": "0012", "radial_pos_m": 1.0, "chord_len_m": 0.706025153, "twist_rad": 0.273841788},
     {"naca": "0012", "radial_pos_m": 2.0, "chord_len_m": 0.436187551, "twist_rad": 0.089045729},
-    {"naca": "6612", "radial_pos_m": 3.0, "chord_len_m": 0.304517933, "twist_rad": 0.01619744},
+    {"naca": "0012", "radial_pos_m": 3.0, "chord_len_m": 0.304517933, "twist_rad": 0.01619744},
     {"naca": "0012", "radial_pos_m": 4.0, "chord_len_m": 0.232257636, "twist_rad": -0.02182332},
     {"naca": "0012", "radial_pos_m": 5.0, "chord_len_m": 0.232257636, "twist_rad": -0.02182332}
   ],

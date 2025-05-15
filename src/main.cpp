@@ -1,21 +1,49 @@
 #include "../include/headers.h"
 
 
+using namespace matplot;
 // Example usage
 int main() {
     // xf::demo();
 
-    Rotor rotor("test");
-    BladeSection test_section("2412", 0.5_m, 0.1_m, 0.1_rad, 0.01_m, rotor);
-    rotor.run_bem();
+    double tsr_min = 1.0;
+    double tsr_max = 8.0;
+
+    std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 50);
+
+    std::vector<double> produced_power_vec, total_power_vec;
+    std::vector<double> cp_vec;
+    std::vector<double> torque_vec;
+    std::vector<double> drag_vec;
+
+    for (auto tsr: tsr_vec) {
+        Rotor rotor("test");
+        rotor.initialize_rotor(tsr);
+        rotor.run_bem();
+        produced_power_vec.push_back(rotor.g_produced_power().value());
+        total_power_vec.push_back(rotor.g_total_power().value());
+        cp_vec.push_back(rotor.g_c_p().value());
+        torque_vec.push_back(rotor.g_torque().value());
+        drag_vec.push_back(rotor.g_drag().value());
+    }
 
 
-    // test_section.update_alpha(radian_t(M_PI_4));
-    // test_section.update_cl_cd();
-    // std::cout << test_section.g_cl() << "\n";
-    // std::cout << test_section.g_cd() << "\n";
 
 
-    // rotor.save_rotor_json("test2_rotor");
+    figure();
+    hold(on);
+
+    // plot(tsr_vec, produced_power_vec)->color("blue");
+    // plot(tsr_vec, total_power_vec)->color("red");
+    plot(tsr_vec, cp_vec)->color("green");
+
+    legend("Produced Power");
+    xlabel("Tip-Speed Ratio (TSR)");
+    ylabel("Power / Cp");
+    title("BEM Results vs TSR");
+    grid(on);
+
+    show();
+
     return 0;
 }

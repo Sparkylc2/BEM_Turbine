@@ -47,6 +47,10 @@
 #include <vector>
 #include <stdexcept>
 #include <cmath>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <cmath>
 
 
 
@@ -55,13 +59,11 @@
 //---------------------------------
 #include <units.h>
 #include <nlohmann/json.hpp>
+#include <matplot/matplot.h>
 
 // #include <Core/CoreAll.h>
 // #include <Fusion/FusionAll.h>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <cmath>
+
 
 
 
@@ -72,9 +74,9 @@
 #include "helpers.h"
 #include "xfoil_hook.h"
 #include "viterna_extrapolator.h"
-#include "bem_corrections.h"
 
 #include "blade_section.h"
+#include "bem_corrections.h"
 #include "rotor.h"
 #include "bem_solver.h"
 

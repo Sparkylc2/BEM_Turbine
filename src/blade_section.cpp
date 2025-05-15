@@ -6,7 +6,7 @@
 
 void BladeSection::initialize_blade_section() {
     local_solidity = parent_rotor.g_num_blades() * chord_length / (2.0 * M_PI * radial_position);
-    local_tip_speed_ratio = dimensionless_t((parent_rotor.g_angular_velocity() * radial_position / parent_rotor.g_wind_speed()).value());
+    local_tip_speed_ratio = meters_per_second_t((parent_rotor.g_angular_velocity() * radial_position).value()) / parent_rotor.g_wind_speed();
 
     non_dim_radius = radial_position / parent_rotor.g_rotor_radius();
 
@@ -14,30 +14,33 @@ void BladeSection::initialize_blade_section() {
 
     cfg = xf::Config();
     cfg.naca = naca_code;
-    cfg.alpha = 0.0;
+    cfg.alpha = 0.0_deg;
+
+
+    a = dimensionless_t(1.0 / 3.0);
+    a_prime = dimensionless_t(1.0 / 3.0);
 }
+
 
 
 
 
 void BladeSection::update_alpha(radian_t phi) {
     this -> alpha = phi - twist_angle;
-    cfg.alpha = degree_t(alpha).value();
+    cfg.alpha = alpha;
 }
 
 
-void BladeSection::update_cl_cd()
-{
+void BladeSection::update_cl_cd() {
     static std::unordered_map<std::string, xf::Polar> basePolars;
 
     xf::Polar basePolar;
     auto it = basePolars.find(naca_code);
-    if (it == basePolars.end())
-    {
+    if (it == basePolars.end()) {
+        // not optimal but im too lazy to change it now
         xf::XFOILRunner &runner = parent_rotor.runner;
 
-        auto routine = [&](std::ofstream &ss)
-        {
+        auto routine = [&](std::ofstream &ss) {
             using namespace xf;
             XFOILRunner::toggle_headless(ss);
             XFOILRunner::init_airfoil_geometry(ss, cfg);
@@ -48,61 +51,58 @@ void BladeSection::update_cl_cd()
         };
 
 
-        if (!runner.run(cfg, basePolar, routine) || basePolar.pts.empty())
-        {
+        if (!runner.run(cfg, basePolar, routine) || basePolar.pts.empty()) {
             std::cerr << "[XFOIL]   failed for airfoil " << naca_code
                       << " – using flat-plate model\n";
         }
 
         basePolars.emplace(naca_code, basePolar);
+    } else {
+        basePolar = it -> second;
     }
-    else
-        basePolar = it->second;
 
-    const double cr75 = chord_length.value() /
-                        (parent_rotor.g_rotor_radius().value() * 0.75);
+    const dimensionless_t cr75 = chord_length / (parent_rotor.g_rotor_radius() * 0.75);
 
     ViternaExtrapolator extrap(basePolar, cr75);
 
-    const double alpha_deg = degree_t(alpha).value();
-    auto [cl_val, cd_val]  = extrap.getCoefficients(alpha_deg);
+    auto [cl_val, cd_val]  = extrap.get_coefficients(alpha);
 
 
-    if (std::isnan(cl_val) || std::isnan(cd_val)) {
-        throw std::runtime_error("XFOIL failed to generate points for Re=" + std::to_string(cfg.re));
+    if (std::isnan(cl_val.value()) || std::isnan(cd_val.value())) {
+        throw std::runtime_error("XFOIL failed to generate points for Re=" + std::to_string(cfg.re.value()));
     }
 
-    if (!extrap.isInOriginalRange(alpha_deg))
+    // if (!extrap.is_in_original_range(alpha))
 
-    cl = dimensionless_t(cl_val);
-    cd = dimensionless_t(cd_val);
+    c_l = cl_val;
+    c_d = cd_val;
 }
 
 
-void BladeSection::update_induction_factors(dimensionless_t a, dimensionless_t a_prime) {
+void BladeSection::update_induction_factors(const dimensionless_t a, const dimensionless_t a_prime) {
     this -> a = a;
     this -> a_prime = a_prime;
 }
 
 void BladeSection::post_bem_routine() {
-    std::cout << "Running post BEM routine for blade section " << naca_code << " at radius: " << unit_cast<double>(radial_position) << " m\n";
+    std::cout << "Running post BEM routine for blade section " << naca_code << " at radius: " << radial_position << "\n";
     const radian_t inflow_angle = alpha + twist_angle;
 
-    const double w1 = unit_cast<double>(parent_rotor.g_wind_speed() * (1.0 - a.value()) / math::sin(inflow_angle));
-    const double w2 = unit_cast<double>(parent_rotor.g_angular_velocity() * radial_position * (1.0 + a_prime.value()) / math::cos(inflow_angle));
-    if (abs(w1 - w2) > 0.01) {
+    const meters_per_second_t w1 = parent_rotor.g_wind_speed() * (1.0 - a) / math::sin(inflow_angle);
+    const meters_per_second_t w2 = meters_per_second_t((parent_rotor.g_angular_velocity() * radial_position).value()) * (1.0 + a_prime) / math::cos(inflow_angle);
+
+    if (math::abs(w1 - w2) > 1e-3_mps) {
         std::cerr << "Warning: Inflow angle is not converged!\n";
     }
-    this -> w = meters_per_second_t(w1);
-
+    this -> w = (w1 + w2) / 2.0;
     compute_differential_forces();
 }
 
 
 void BladeSection::compute_differential_forces() {
     const radian_t inflow_angle = alpha + twist_angle;
-    const dimensionless_t c_n = cl * math::cos(inflow_angle) - cd * math::sin(inflow_angle);
-    const dimensionless_t c_t = cl * math::sin(inflow_angle) + cd * math::cos(inflow_angle);
+    const dimensionless_t c_n = c_l * math::cos(inflow_angle) - c_d * math::sin(inflow_angle);
+    const dimensionless_t c_t = c_l * math::sin(inflow_angle) + c_d * math::cos(inflow_angle);
 
     differential_drag = 0.5 * parent_rotor.density * w * w * c_n * chord_length * differential_radius;
     differential_torque = 0.5 * parent_rotor.density * w * w * c_t * chord_length * radial_position * differential_radius;
