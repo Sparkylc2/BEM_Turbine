@@ -10,8 +10,8 @@ namespace BEMSolver {
 
     radian_t newton_raphson(const Blade_Func& f, Blade_Func& df, BladeSection& blade, radian_t phi_0, const dimensionless_t tol, const int max_iter) {
 
-        constexpr radian_t phi_min = 1e-3_rad;
-        constexpr radian_t phi_max = radian_t(M_PI_2 - 1e-3);
+        constexpr radian_t phi_min = 1e-4_rad;
+        constexpr radian_t phi_max = radian_t(M_PI_2 - 1e-4);
 
         radian_t phi = phi_0;
         for (int it = 0; it < max_iter; ++it) {
@@ -39,14 +39,10 @@ namespace BEMSolver {
     radian_t solve_phi_with_retries(BladeSection& blade, Blade_Func& f, Blade_Func& df) {
 
         constexpr dimensionless_t k_tol = dimensionless_t(1e-6);
-        constexpr int k_max_it = 200;
-        //
-        // constexpr radian_t lo = 0.02_rad;
-        // constexpr radian_t hi = radian_t(M_PI_2 - 0.02);
-        //
+        constexpr int k_max_it = 300;
+
         constexpr radian_t phi_min = -1*1e-3_rad;
         constexpr radian_t phi_max = radian_t(M_PI_2 - 1e-3);
-        constexpr radian_t eps = 1e-6_rad;
 
 
         const std::vector<radian_t> seeds = {
@@ -60,7 +56,6 @@ namespace BEMSolver {
         for (const radian_t s : seeds) {
             try {
                 if (radian_t phi = newton_raphson(f, df, blade, s, k_tol, k_max_it); !std::isnan(phi.value())) {
-                    std::cout << "Converged phi: " << phi << std::endl;
                     return phi;
                 }
             } catch (...) {/* swallow and try next seed */}
@@ -96,17 +91,15 @@ namespace BEMSolver {
         };
 
         Blade_Func df = [](const BladeSection& b, const radian_t& phi) {
-            return numerical_derivative(b, phi, radian_t(1e-6));
+            return numerical_derivative(b, phi, radian_t(1e-8));
         };
 
         const radian_t phi = solve_phi_with_retries(blade, f, df);
         const auto [a, a_p] = perform_blade_iteration(blade, phi);
 
-        std::cout << "a: " << a << std::endl;
-        std::cout << "a_p: " << a_p << std::endl;
         blade.update_induction_factors(a, a_p);
 
-        // std::cout << "BEM solver converged to φ = " << phi << " rad\n";
+        std::cout << "BEM solver converged to φ = " << phi << " a: " << a << " a': " << a_p << "\n";
     }
 
 
@@ -127,7 +120,7 @@ namespace BEMSolver {
         /* ------------ SNEL STALL DELAY CORRECTION  ----------- */
         // BEMCorrections::snel_stall_delay_correction(cl, cd, blade);
         /* ----------------------------------------------------- */
-        
+
 
 
         dimensionless_t cn = cl * cos_phi - cd * sin_phi;

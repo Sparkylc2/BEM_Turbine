@@ -130,7 +130,6 @@ add_executable(BEM_Turbine src/main.cpp
         include/viterna_extrapolator.h
         include/fusion_hook.h
         include/bem_corrections.h
-        include/analysis.h
 )
 
 
