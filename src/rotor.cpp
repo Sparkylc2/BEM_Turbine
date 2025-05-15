@@ -76,7 +76,9 @@ void Rotor::init_blade_sections(nlohmann::json& j) {
                meter_t(node["chord_len_m"].get<double>()),
                radian_t(node["twist_rad"].get<double>()),
                meter_t(diff_r),
-               *this
+               *this,
+               node["coordinate_file"].get<std::string>()
+
        );
     }
 }
@@ -108,8 +110,9 @@ void Rotor::run_bem() {
     for (auto& section : this -> blade_sections) {
         BEMSolver::run_bem_solver(section);
         section.post_bem_routine();
-        this -> drag += section.g_differential_drag();
-        this -> torque += section.g_differential_torque();
+
+        if (!isnan(section.g_differential_drag().value())) this -> drag += section.g_differential_drag();
+        if (!isnan(section.g_differential_torque().value())) this -> torque += section.g_differential_torque();
     }
 
     drag *= this -> num_blades;
@@ -119,12 +122,12 @@ void Rotor::run_bem() {
     total_power = 0.5 * M_PI * density * rotor_radius * rotor_radius * wind_speed * wind_speed * wind_speed;
 
     cp = produced_power / total_power;
-
-    std::cout << "Calculated Axial Drag: " << this->drag << "\n";
-    std::cout << "Calculated Torque: " << this->torque << "\n";
-    std::cout << "Mechanical Power: " << produced_power << " W\n";
-    std::cout << "Available Wind Power: " << total_power << " W\n";
-    std::cout << "Power Coefficient (Cp): " << cp << " [dimensionless]\n";
+    //
+    // std::cout << "Calculated Axial Drag: " << this->drag << "\n";
+    // std::cout << "Calculated Torque: " << this->torque << "\n";
+    // std::cout << "Mechanical Power: " << produced_power << " W\n";
+    // std::cout << "Available Wind Power: " << total_power << " W\n";
+    // std::cout << "Power Coefficient (Cp): " << cp << " [dimensionless]\n";
 
     if (cp.value() > 0.593) {
         std::cout << "WARNING: Calculated cp exceeds betz limit\n";

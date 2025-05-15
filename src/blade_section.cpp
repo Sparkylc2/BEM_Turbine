@@ -14,6 +14,9 @@ void BladeSection::initialize_blade_section() {
 
     cfg = xf::Config();
     cfg.naca = naca_code;
+    if (!coordinate_file.empty()) {
+        cfg.coord_file = "/work/naca_data/airfoil_profiles/" + coordinate_file;
+    }
     cfg.alpha = 0.0_deg;
 
 
@@ -47,6 +50,7 @@ void BladeSection::update_cl_cd() {
             XFOILRunner::configure_airfoil(ss, cfg);
             XFOILRunner::configure_solver(ss, cfg);
             XFOILRunner::set_alpha_sweep(ss, cfg);
+            XFOILRunner::save_airfoil(ss, cfg);
             XFOILRunner::quit(ss);
         };
 
@@ -85,7 +89,7 @@ void BladeSection::update_induction_factors(const dimensionless_t a, const dimen
 }
 
 void BladeSection::post_bem_routine() {
-    std::cout << "Running post BEM routine for blade section " << naca_code << " at radius: " << radial_position << "\n";
+    // std::cout << "Running post BEM routine for blade section " << naca_code << " at radius: " << radial_position << "\n";
     const radian_t inflow_angle = alpha + twist_angle;
 
     const meters_per_second_t w1 = parent_rotor.g_wind_speed() * (1.0 - a) / math::sin(inflow_angle);

@@ -7,7 +7,7 @@ int main() {
     // xf::demo();
 
     double tsr_min = 1.0;
-    double tsr_max = 8.0;
+    double tsr_max = 4.5;
 
     std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 50);
 
@@ -17,7 +17,8 @@ int main() {
     std::vector<double> drag_vec;
 
     for (auto tsr: tsr_vec) {
-        Rotor rotor("test");
+        std::cout << "TSR: " << tsr << std::endl;
+        Rotor rotor("blade a");
         rotor.initialize_rotor(tsr);
         rotor.run_bem();
         produced_power_vec.push_back(rotor.g_produced_power().value());

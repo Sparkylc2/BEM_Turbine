@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.31.6)
 project(BEM_Turbine)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -7,7 +7,7 @@ add_compile_definitions(XFOIL_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
 # -------------------- LIBS -------------------- #
 include(FetchContent)
-
+set(CMAKE_MINIMUM_REQUIRED_VERSION 3.5)
 # ---------------------- GSL-LITE -------------------- #
 find_package(gsl-lite QUIET)
 if (NOT gsl-lite_FOUND)

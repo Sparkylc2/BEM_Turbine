@@ -29,7 +29,7 @@ namespace BEMCorrections {
         if(mach <= 0.0 || mach >= 0.85) return; // outside valid area
 
         const auto beta = math::sqrt(math::max(1.0 - mach * mach, dimensionless_t(1e-12)));
-        cl *= (1 + (mach * mach) / (1 + beta)) / beta;
+        cl = cl / beta * (1 + (mach * mach) / (1 + beta));
     }
 
 
@@ -41,7 +41,7 @@ namespace BEMCorrections {
         const meter_t chord_len = blade.g_chord_len();
         const meter_t r = blade.g_radial_pos();
 
-        const dimensionless_t fac = (chord_len / r)*(chord_len / r) * blade.g_local_tsr();
+        const dimensionless_t fac = (chord_len / r) * (chord_len / r) * blade.g_local_tsr();
         const radian_t alpha = blade.g_alpha();
         if(alpha > 30.0_deg || alpha < -30.0_deg) return;
 

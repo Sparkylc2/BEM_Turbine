@@ -20,6 +20,7 @@ class BladeSection {
     xf::Config cfg;
 
     std::string naca_code;
+    std::string coordinate_file;
 
 
     meter_t radial_position;
@@ -57,7 +58,8 @@ public:
         const meter_t chord_length,
         const radian_t twist_angle,
         const meter_t differential_radius,
-        Rotor& parent_rotor
+        Rotor& parent_rotor,
+        const std::string coordinate_file = ""
     )
     :
         naca_code{naca_code},
@@ -65,7 +67,9 @@ public:
         chord_length{chord_length},
         twist_angle{twist_angle},
         differential_radius{differential_radius},
+        coordinate_file{coordinate_file},
         parent_rotor{parent_rotor}
+
     {
         initialize_blade_section();
     }
