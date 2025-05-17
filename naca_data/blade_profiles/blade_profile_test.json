@@ -1,0 +1,219 @@
+{
+    "blades": [
+        {
+            "radial_pos_m": 0.1,
+            "chord_len_m": 0.1,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.106896,
+            "chord_len_m": 0.106896,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.113794,
+            "chord_len_m": 0.113794,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.12069,
+            "chord_len_m": 0.12069,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.127586,
+            "chord_len_m": 0.127586,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.134482,
+            "chord_len_m": 0.134482,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.14138,
+            "chord_len_m": 0.14138,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.14827600000000002,
+            "chord_len_m": 0.14827600000000002,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.155172,
+            "chord_len_m": 0.155172,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.162068,
+            "chord_len_m": 0.162068,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.168966,
+            "chord_len_m": 0.168966,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.175862,
+            "chord_len_m": 0.175862,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.182758,
+            "chord_len_m": 0.182758,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.189656,
+            "chord_len_m": 0.189656,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.196552,
+            "chord_len_m": 0.196552,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.20344800000000002,
+            "chord_len_m": 0.20344800000000002,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.21034399999999998,
+            "chord_len_m": 0.21034399999999998,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.217242,
+            "chord_len_m": 0.217242,
+            "twist_rad": 0,
+            "naca": "2412",
+            "coordinate_file": ""
+        },
+        {
+            "radial_pos_m": 0.224138,
+            "chord_len_m": 0.224138,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.231034,
+            "chord_len_m": 0.231034,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.237932,
+            "chord_len_m": 0.237932,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.244828,
+            "chord_len_m": 0.244828,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.25172399999999995,
+            "chord_len_m": 0.25172399999999995,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.25861999999999996,
+            "chord_len_m": 0.25861999999999996,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.26551800000000003,
+            "chord_len_m": 0.26551800000000003,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.272414,
+            "chord_len_m": 0.272414,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.27930999999999995,
+            "chord_len_m": 0.27930999999999995,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.28620599999999996,
+            "chord_len_m": 0.28620599999999996,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.29310400000000003,
+            "chord_len_m": 0.29310400000000003,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        },
+        {
+            "radial_pos_m": 0.3,
+            "chord_len_m": 0.3,
+            "twist_rad": 0,
+            "naca": "",
+            "coordinate_file": "2132.dat"
+        }
+    ],
+    "rotor_hub_radius_m": 0.1,
+    "rotor_radius_m": 0.3,
+    "num_blades": 2,
+    "tip_speed_ratio": 3.5,
+    "wind_speed_mps": 10.0
+}
