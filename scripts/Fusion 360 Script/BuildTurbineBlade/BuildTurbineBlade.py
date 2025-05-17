@@ -359,9 +359,8 @@ def run(context):
         for pr in profiles:
             lf_in.loftSections.add(pr)
 
-        # create a YZ-plane sketch and convert world pts into sketch space
-        yz_plane   = root.yZConstructionPlane
-        rail_sk    = root.sketches.add(yz_plane)
+        yz_plane  = root.yZConstructionPlane
+        rail_sk   = root.sketches.add(yz_plane)
 
         z_min = to_du(sections[0]["radial_pos_m"])
         z_max = to_du(sections[-1]["radial_pos_m"])
@@ -372,9 +371,24 @@ def run(context):
         rail_line = rail_sk.sketchCurves.sketchLines.addByTwoPoints(p0, p1)
         rail_path = root.features.createPath(rail_line)
 
-        # pass the rail to the loft
-        lf_in.centerLineOrRails.addCenterLine(rail_path)
-        blade_body = lofts.add(lf_in).bodies.item(0)
+        lofts       = root.features.loftFeatures
+        blade_body  = None
+
+        for i in range(1, len(profiles)):
+            lf_in = lofts.createInput(
+                adsk.fusion.FeatureOperations.NewBodyFeatureOperation
+                if blade_body is None
+                else adsk.fusion.FeatureOperations.JoinFeatureOperation)
+
+            lf_in.loftSections.add(profiles[i - 1])
+            lf_in.loftSections.add(profiles[i])
+            lf_in.centerLineOrRails.addCenterLine(rail_path)
+
+            loft = lofts.add(lf_in)
+
+            if blade_body is None:
+                blade_body = loft.bodies.item(0)
+
 
         # exp_mgr = design.exportManager
         # opts    = exp_mgr.createFusionArchiveExportOptions(str(save_path))
