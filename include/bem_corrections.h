@@ -20,7 +20,7 @@ namespace BEMCorrections {
         const auto r = blade.g_radial_pos();
         const auto cs = blade.parent_rotor.speed_of_sound;
 
-        const meters_per_second_t u = v_inf * ( 1 - a);
+        const auto u = v_inf * ( 1 - a);
         const meters_per_second_t v = meters_per_second_t((omega * r * (1 + ap)).value());
 
         const auto w = math::hypot(u, v);

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Create Blade Profile" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="Create Blade Profile JSON" type="PythonConfigurationType" factoryName="Python">
     <module name="BEM_Turbine" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
