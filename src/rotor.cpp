@@ -51,25 +51,25 @@ void Rotor::initialize_rotor(double tsr) {
 
 void Rotor::init_blade_sections(nlohmann::json& j) {
 
-    for (size_t i = 0; i < j["blade"].size(); i++) {
+    for (size_t i = 0; i < j["blades"].size(); i++) {
         // double diff_r = j["blade"][i]["radial_pos_m"].get<double>() - j["blade"][i - 1]["radial_pos_m"].get<double>();
         meter_t diff_r = 0.0_m;
         if (i == 0) {
-            diff_r = meter_t((j["blade"][i+1]["radial_pos_m"].get<double>() -
-                      j["blade"][i]["radial_pos_m"].get<double>()) / 2.0 +
-                      (j["blade"][i]["radial_pos_m"].get<double>() -
+            diff_r = meter_t((j["blades"][i+1]["radial_pos_m"].get<double>() -
+                      j["blades"][i]["radial_pos_m"].get<double>()) / 2.0 +
+                      (j["blades"][i]["radial_pos_m"].get<double>() -
                        j["rotor_hub_radius_m"].get<double>()));
-        } else if (i == j["blade"].size() - 1) {
+        } else if (i == j["blades"].size() - 1) {
             diff_r = meter_t((j["rotor_radius_m"].get<double>() -
-                      j["blade"][i-1]["radial_pos_m"].get<double>()) / 2.0);
+                      j["blades"][i-1]["radial_pos_m"].get<double>()) / 2.0);
         } else {
-            diff_r = meter_t((j["blade"][i+1]["radial_pos_m"].get<double>() -
-                      j["blade"][i-1]["radial_pos_m"].get<double>()) / 2.0);
+            diff_r = meter_t((j["blades"][i+1]["radial_pos_m"].get<double>() -
+                      j["blades"][i-1]["radial_pos_m"].get<double>()) / 2.0);
         }
 
         // if (i == 0 || i == j["blade"].size() - 1) diff_r /= 2.0;
 
-        auto node = j["blade"][i];
+        auto node = j["blades"][i];
         this -> blade_sections.emplace_back(
                node["naca"].get<std::string>(),
                meter_t(node["radial_pos_m"].get<double>()),
@@ -106,14 +106,17 @@ nlohmann::json Rotor::load_rotor_json() {
 void Rotor::run_bem() {
     this -> drag = newton_t(0);
     this -> torque = newton_meter_t(0);
+    this -> cp = dimensionless_t(0);
 
-    for (auto& section : this -> blade_sections) {
-        BEMSolver::run_bem_solver(section);
-        section.post_bem_routine();
 
-        if (!isnan(section.g_differential_drag().value())) this -> drag += section.g_differential_drag();
-        if (!isnan(section.g_differential_torque().value())) this -> torque += section.g_differential_torque();
+    for (auto &sec : blade_sections) {
+        BEMSolver::run_bem_backup(sec);
+        sec.post_bem_routine();
+
+        if (!isnan(sec.g_differential_drag().value())) this -> drag += sec.g_differential_drag();
+        if (!isnan(sec.g_differential_torque().value())) this -> torque += sec.g_differential_torque();
     }
+
 
     drag *= this -> num_blades;
     torque *= this -> num_blades;
@@ -122,12 +125,6 @@ void Rotor::run_bem() {
     total_power = 0.5 * M_PI * density * rotor_radius * rotor_radius * wind_speed * wind_speed * wind_speed;
 
     cp = produced_power / total_power;
-    //
-    // std::cout << "Calculated Axial Drag: " << this->drag << "\n";
-    // std::cout << "Calculated Torque: " << this->torque << "\n";
-    // std::cout << "Mechanical Power: " << produced_power << " W\n";
-    // std::cout << "Available Wind Power: " << total_power << " W\n";
-    // std::cout << "Power Coefficient (Cp): " << cp << " [dimensionless]\n";
 
     if (cp.value() > 0.593) {
         std::cout << "WARNING: Calculated cp exceeds betz limit\n";
@@ -146,10 +143,10 @@ void Rotor::save_rotor_json(const std::string& name) const {
     j["tip_speed_ratio"] = unit_cast<double>(tsr);
     j["wind_speed_mps"]  = unit_cast<double>(wind_speed);
 
-    j["blade"] = nlohmann::json::array();
+    j["blades"] = nlohmann::json::array();
 
     for (const auto& section : this->blade_sections) {
-        j["blade"].push_back({
+        j["blades"].push_back({
             {"naca",         section.g_naca_code()},
             {"radial_pos_m", section.g_radial_pos().value()},
             {"chord_len_m",  section.g_chord_len().value()},

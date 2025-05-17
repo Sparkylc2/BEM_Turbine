@@ -35,8 +35,8 @@ namespace Helpers {
         const scalar_t cached_sin_phi = math::sin(phi);
         const scalar_t cached_cos_phi = math::cos(phi);
 
-        const scalar_t sin_phi = math::copysign(math::max(math::fabs(cached_sin_phi), scalar_t(1e-6)), cached_sin_phi);
-        const scalar_t cos_phi = math::copysign(math::max(math::fabs(cached_cos_phi), scalar_t(1e-6)), cached_cos_phi);
+        const scalar_t sin_phi = math::copysign(math::max(math::fabs(cached_sin_phi), scalar_t(1e-12)), cached_sin_phi);
+        const scalar_t cos_phi = math::copysign(math::max(math::fabs(cached_cos_phi), scalar_t(1e-12)), cached_cos_phi);
 
         return {sin_phi, cos_phi};
     }

@@ -95,8 +95,8 @@ void BladeSection::post_bem_routine() {
     const meters_per_second_t w1 = parent_rotor.g_wind_speed() * (1.0 - a) / math::sin(inflow_angle);
     const meters_per_second_t w2 = meters_per_second_t((parent_rotor.g_angular_velocity() * radial_position).value()) * (1.0 + a_prime) / math::cos(inflow_angle);
 
-    if (math::abs(w1 - w2) > 1e-3_mps) {
-        std::cerr << "Warning: Inflow angle is not converged!\n";
+    if (math::abs(w1 - w2) > 1e-6_mps) {
+        std::cerr << "Warning: Inflow angle is not converged!  " << "Residual = " << w1 - w2 << "\n";
     }
     this -> w = (w1 + w2) / 2.0;
     compute_differential_forces();
@@ -104,11 +104,13 @@ void BladeSection::post_bem_routine() {
 
 
 void BladeSection::compute_differential_forces() {
-    const radian_t inflow_angle = alpha + twist_angle;
-    const dimensionless_t c_n = c_l * math::cos(inflow_angle) - c_d * math::sin(inflow_angle);
-    const dimensionless_t c_t = c_l * math::sin(inflow_angle) + c_d * math::cos(inflow_angle);
+    const radian_t phi = alpha + twist_angle;
+    update_cl_cd();
+    const dimensionless_t c_n = c_l * math::cos(phi) + c_d * math::sin(phi);
+    const dimensionless_t c_t = c_l * math::sin(phi) - c_d * math::cos(phi);
 
-    differential_drag = 0.5 * parent_rotor.density * w * w * c_n * chord_length * differential_radius;
+
+    differential_drag   = 0.5 * parent_rotor.density * w * w * c_n * chord_length * differential_radius;
     differential_torque = 0.5 * parent_rotor.density * w * w * c_t * chord_length * radial_position * differential_radius;
 }
 

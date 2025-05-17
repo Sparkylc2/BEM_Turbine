@@ -14,5 +14,8 @@ namespace BEMSolver {
     std::pair<dimensionless_t, dimensionless_t> perform_blade_iteration(BladeSection &blade, const radian_t& phi);
     radian_t solve_phi_with_retries(BladeSection& blade, Blade_Func& f, Blade_Func& df);
     dimensionless_t compute_residual(const BladeSection& blade_ref, const radian_t& phi);
+
+    void run_bem_backup(BladeSection& blade);
+    std::pair<dimensionless_t, dimensionless_t> perform_iteration(const BladeSection& blade_ref, const dimensionless_t old_a, const dimensionless_t old_ap);
 }
 

@@ -7,9 +7,9 @@ int main() {
     // xf::demo();
 
     double tsr_min = 1.0;
-    double tsr_max = 4.5;
+    double tsr_max = 6.0;
 
-    std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 50);
+    std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 200);
 
     std::vector<double> produced_power_vec, total_power_vec;
     std::vector<double> cp_vec;
@@ -33,18 +33,42 @@ int main() {
 
     figure();
     hold(on);
-
-    // plot(tsr_vec, produced_power_vec)->color("blue");
-    // plot(tsr_vec, total_power_vec)->color("red");
-    plot(tsr_vec, cp_vec)->color("green");
-
-    legend("Produced Power");
+    plot(tsr_vec, cp_vec) -> color("green");
     xlabel("Tip-Speed Ratio (TSR)");
-    ylabel("Power / Cp");
-    title("BEM Results vs TSR");
+    ylabel("C_p");
+    title("C_p vs TSR");
     grid(on);
-
     show();
+
+
+    figure();
+    hold(on);
+    auto l1 = plot(tsr_vec, produced_power_vec);
+    l1 -> color("blue");
+    l1 -> line_width(2.0);
+    l1 -> line_style("--");
+    l1 -> marker("o");
+    l1 -> marker_size(6.0);
+    plot(tsr_vec, total_power_vec)->color("red");
+    legend("Produced Power (, Total Power");
+    xlabel("Tip-Speed Ratio (TSR)");
+    ylabel("Power (W)");
+    title("Produced Power vs TSR");
+    grid(on);
+    show();
+
+
+    figure();
+    hold(on);
+    plot(tsr_vec, drag_vec)->color("blue");
+    plot(tsr_vec, torque_vec)->color("red");
+    legend("Drag (N), Torque Power (Nm)");
+    xlabel("Tip-Speed Ratio (TSR)");
+    ylabel("N/Nm");
+    title("Produced Power vs TSR");
+    grid(on);
+    show();
+
 
     return 0;
 }

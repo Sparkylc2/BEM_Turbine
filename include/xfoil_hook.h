@@ -142,9 +142,16 @@ namespace xf {
                << "\n";
         }
 
+        static void dump_coordinates(std::ofstream& ss, const Config& cfg) {
+            ss << "PANE\n";
+            ss << "DUMP\n";
+        }
+
+
         static void set_alpha(std::ofstream& ss, const degree_t& alpha) {
             ss << "OPER" << "\n"
-               << "  ALFA" << std::fixed << std::setprecision(6) << alpha.value() << "\n";
+               << "  ALFA" << std::fixed << std::setprecision(6) << alpha.value() << "\n"
+               << "\n";
         }
 
         static void set_alpha_sweep(std::ofstream& ss, const Config& cfg) {
@@ -176,16 +183,15 @@ namespace xf {
                 std::cerr << "Error: Invalid save command. Use SAVE, PSAV, ISAV, or MSAV.\n";
                 return;
             }
-
             const std::string name = (filename.empty() ? cfg.naca : filename) + ".dat";
             const std::string hostPath = Config::g_save_path("AIRFOIL", name);
             const std::string container = Config::to_container_path(hostPath);
 
-            std::filesystem::create_directories(std::filesystem::path(hostPath).parent_path());
-
-            std::cout << "airfoil filepath: " << container << "\n";
             ss << save_cmd << " \"" << container << "\"\n";
+            ss << "\n";
         }
+
+
 
 
 
@@ -208,9 +214,9 @@ namespace xf {
 
             std::string cmd =
                 runtime + " run --rm -i " +
-                "-v " + Helpers::sh_quote(mount_path + ":/work") + " " +
+                "-v " + Helpers::sh_quote(mount_path + ":/work:rw") + " " +
                 "-w /work " +
-                image  + " xfoil " +
+                image + " xfoil " +
                 "< " + Helpers::sh_quote(scr) + " 2>&1";
 
             if(verb) *verb << "[XFOIL] Running: " << cmd << "\n";
@@ -223,9 +229,11 @@ namespace xf {
                 *verb << "==================\n";
             }
 
+
             polar = parse_xfoil_output_to_polar(xfoil_output, cfg.re);
 
             std::filesystem::remove(scr);
+
             return !polar.pts.empty();
         }
 
