@@ -288,28 +288,24 @@ def run(context):
 
 
 
-        ROOT_DIR = Path(__file__).resolve().parent.parent
-        airfoil_dir = ROOT_DIR / "naca_data" / "airfoil_profiles"
-        save_path = ROOT_DIR / "naca_data" / "blade_models" / f"{Path(json_path).stem}.f3d"
+        # ROOT_DIR = Path(__file__).resolve().parent.parent
+        # airfoil_dir = ROOT_DIR / "naca_data" / "airfoil_profiles"
+        # save_path = ROOT_DIR / "naca_data" / "blade_models" / f"{Path(json_path).stem}.f3d"
 
 
+        fol = ui.createFolderDialog()
+        fol.title = "Select folder containing .dat air-foil files"
+        if fol.showDialog() != adsk.core.DialogResults.DialogOK:
+            return
+        airfoil_dir = Path(fol.folder)
 
-
-        #
-        #
-        # fol = ui.createFolderDialog()
-        # fol.title = "Select folder containing .dat air-foil files"
-        # if fol.showDialog() != adsk.core.DialogResults.DialogOK:
-        #     return
-        # airfoil_dir = Path(fol.folder)
-        #
-        # sf = ui.createFileDialog()
-        # sf.title  = "Save blade as Fusion archive"
-        # sf.filter = "Fusion Archive (*.f3d)"
-        # sf.initialFilename = json_path.stem + ".f3d"
-        # if sf.showSave() != adsk.core.DialogResults.DialogOK:
-        #     return
-        # save_path = Path(sf.filename)
+        sf = ui.createFileDialog()
+        sf.title  = "Save blade as Fusion archive"
+        sf.filter = "Fusion Archive (*.f3d)"
+        sf.initialFilename = json_path.stem + ".f3d"
+        if sf.showSave() != adsk.core.DialogResults.DialogOK:
+            return
+        save_path = Path(sf.filename)
 
         doc    = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
         design = adsk.fusion.Design.cast(app.activeProduct)

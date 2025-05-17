@@ -113,8 +113,8 @@ void Rotor::run_bem() {
         BEMSolver::run_bem_backup(sec);
         sec.post_bem_routine();
 
-        if (!isnan(sec.g_differential_drag().value())) this -> drag += sec.g_differential_drag();
-        if (!isnan(sec.g_differential_torque().value())) this -> torque += sec.g_differential_torque();
+        if (!std::isnan(sec.g_differential_drag().value())) this -> drag += sec.g_differential_drag();
+        if (!std::isnan(sec.g_differential_torque().value())) this -> torque += sec.g_differential_torque();
     }
 
 

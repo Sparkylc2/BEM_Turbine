@@ -1,0 +1,18 @@
+Download: https://github.com/msys2/msys2-installer/releases/download/2025-02-21/msys2-x86_64-20250221.exe
+Download: https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.0/LLVM-20.1.0-win64.exe
+Download: https://github.com/Kitware/CMake/releases/download/v4.0.2/cmake-4.0.2-windows-x86_64.msi
+
+
+Make sure LLVM is installed in path
+
+Open MSYS2 installer and follow the instructions to install MSYS2.
+Open MSYS2 terminal and run the following commands:
+'pacman -Syu'
+'pacman -S mingw-w64-x86_64-toolchain' + '3'
+
+Install cmake
+
+
+
+Download: https://sourceforge.net/projects/gnuplot/files/gnuplot/
+Install and ensure its in path

@@ -15,7 +15,11 @@ void BladeSection::initialize_blade_section() {
     cfg = xf::Config();
     cfg.naca = naca_code;
     if (!coordinate_file.empty()) {
-        cfg.coord_file = "/work/naca_data/airfoil_profiles/" + coordinate_file;
+        if (parent_rotor.runner.get_runtime() == "docker") {
+            cfg.coord_file = "/work/naca_data/airfoil_profiles/" + coordinate_file;
+        } else {
+            cfg.coord_file = Helpers::get_project_root() + "/naca_data/airfoil_profiles/" + coordinate_file;
+        }
     }
     cfg.alpha = 0.0_deg;
 

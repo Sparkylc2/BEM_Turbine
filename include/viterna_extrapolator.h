@@ -113,7 +113,7 @@ private:
         auto drag=[&](double B1,double B2,degree_t a){
             double s = math::sin(a);
             double c = math::cos(a);
-            return dimensionless_t(cd_max.value() * s *  s + B2 * c);
+            return dimensionless_t(cd_max.value() * s * s + B2 * c);
         };
 
         std::vector<dimensionless_t> cl_pos,cd_pos,cl_neg,cd_neg;

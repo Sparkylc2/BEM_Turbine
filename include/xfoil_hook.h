@@ -88,9 +88,24 @@ namespace xf {
 
     class XFOILRunner {
     public:
-        explicit XFOILRunner(std::string image = "thomaseizinger/xfoil", std::string runtime = "docker")
-            : image(std::move(image)), runtime(std::move(runtime))
+        explicit XFOILRunner(std::string image = "thomaseizinger/xfoil", std::string runtime = "auto")
+            : image(std::move(image))
         {
+            if (runtime == "auto") {
+                #ifdef _WIN32
+                    this->runtime = "cmd";
+                #elif __APPLE__
+                                this->runtime = "docker";
+                #elif __linux__
+                                this->runtime = "docker";
+                #else
+                                std::cerr << "Warning: Unknown OS, defaulting to docker runtime\n";
+                                this->runtime = "docker";
+                #endif
+            } else {
+                this->runtime = runtime;
+            }
+
             for (const auto &val: Config::save_paths | std::views::values) {
                 if (std::filesystem::path path = Helpers::get_project_root() + val; !std::filesystem::exists(path)) {
                     std::cerr << "Creating directory: " << path << "\n";
@@ -98,9 +113,15 @@ namespace xf {
                 }
             }
         }
+        // ──────────────── install/setup helpers ───────────────────────────────────────────────────────
 
-    // ──────────────── routine helpers ───────────────────────────────────────────────────────
-    // each function must always return to the XFOIL state (ie, terminal reads  XFOIL c>)
+        std::string get_runtime() const {
+            return runtime;
+        }
+
+
+        // ──────────────── routine helpers ───────────────────────────────────────────────────────
+         // each function must always return to the XFOIL state (ie, terminal reads  XFOIL c>)
         static void toggle_headless(std::ofstream& ss) {
             ss << "PLOP" << "\n"
                << "  G"  << "\n"
@@ -142,7 +163,7 @@ namespace xf {
                << "\n";
         }
 
-        static void dump_coordinates(std::ofstream& ss, const Config& cfg) {
+        static void dump_coordinates(std::ofstream& ss) {
             ss << "PANE\n";
             ss << "DUMP\n";
         }
@@ -207,17 +228,33 @@ namespace xf {
                 return false;
             }
 
-
             routine(ss);
 
-            const std::string mount_path = std::filesystem::absolute(Helpers::get_project_root()).generic_string();
+            std::string cmd;
+            if (runtime == "docker") {
+                // Docker execution (for macOS/Linux)
+                const std::string mount_path = std::filesystem::absolute(Helpers::get_project_root()).generic_string();
+                cmd = runtime + " run --rm -i " +
+                      "-v " + Helpers::sh_quote(mount_path + ":/work:rw") + " " +
+                      "-w /work " +
+                      image + " xfoil " +
+                      "< " + Helpers::sh_quote(scr) + " 2>&1";
+            } else if (runtime == "cmd") {
+                std::string script_content = adjust_paths_for_local_execution(scr);
+                if (!script_content.empty()) {
+                    std::ofstream new_script(scr, std::ios::trunc);
+                    new_script << script_content;
+                    new_script.close();
+                }
 
-            std::string cmd =
-                runtime + " run --rm -i " +
-                "-v " + Helpers::sh_quote(mount_path + ":/work:rw") + " " +
-                "-w /work " +
-                image + " xfoil " +
-                "< " + Helpers::sh_quote(scr) + " 2>&1";
+                std::string xfoil_exe_path = Helpers::get_project_root() + "/xfoil/xfoil.exe";
+                std::string xfoil_cmd = xfoil_exe_path.empty() ? "xfoil.exe" : xfoil_exe_path;
+                cmd = xfoil_cmd + " < " + scr + " 2>&1";
+                // cmd = "xfoil.exe < " + Helpers::sh_quote(scr) + " 2>&1";
+            } else {
+                std::cerr << "Unsupported runtime: " << runtime << "\n";
+                return false;
+            }
 
             if(verb) *verb << "[XFOIL] Running: " << cmd << "\n";
 
@@ -229,14 +266,12 @@ namespace xf {
                 *verb << "==================\n";
             }
 
-
             polar = parse_xfoil_output_to_polar(xfoil_output, cfg.re);
 
             std::filesystem::remove(scr);
 
             return !polar.pts.empty();
         }
-
     private:
         std::string image, runtime;
 
@@ -280,6 +315,30 @@ namespace xf {
             out.pts.reserve(latest.size());
             for (auto &pt: latest | std::views::values) out.pts.push_back(pt);
             return out;
+        }
+
+        static std::string adjust_paths_for_local_execution(const std::string& script_path) {
+            std::ifstream input(script_path);
+            if (!input) {
+                std::cerr << "Cannot read " << script_path << " for path adjustment\n";
+                return "";
+            }
+
+            std::string content, line;
+            while (std::getline(input, line)) {
+                size_t pos = line.find("/work/");
+                if (pos != std::string::npos) {
+                    std::string project_root = Helpers::get_project_root();
+                    line.replace(pos, 6, project_root);
+
+                    #ifdef _WIN32
+                        std::replace(line.begin(), line.end(), '/', '\\');
+                    #endif
+                }
+                content += line + "\n";
+            }
+            input.close();
+            return content;
         }
 
         static void save_polar_file(const Polar& polar, const Config& cfg) {

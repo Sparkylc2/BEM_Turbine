@@ -95,7 +95,7 @@ namespace BEMSolver {
 
         blade.update_induction_factors(a, a_p);
 
-        if (!isnan(a.value()) || !isnan(a_p.value())) {
+        if (!std::isnan(a.value()) || !std::isnan(a_p.value())) {
 
             std::cout << "BEM solver converged to φ = " << phi << " a: " << a << " a': " << a_p << "\n";
         }

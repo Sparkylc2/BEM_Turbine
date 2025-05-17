@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.31.6)
+cmake_minimum_required(VERSION 3.28.1)
 project(BEM_Turbine)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_definitions(XFOIL_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
@@ -141,16 +141,6 @@ target_link_libraries(BEM_Turbine PRIVATE nlohmann_json::nlohmann_json)
 
 # -------------------- COMPILE-OPTS -------------------- #
 
-target_compile_options(BEM_Turbine PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-)
-
-
-target_compile_options(BEM_Turbine PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/permissive- /O2 /arch:AVX2>
-        $<$<CXX_COMPILER_ID:GNU,Clang>:-O3 -march=native -ffast-math>
-)
 
 
 
