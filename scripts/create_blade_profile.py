@@ -40,22 +40,22 @@ NUM_BLADES = 2
 # ---------------------------------------------------- #
 # ---------------- PROFILE RESOLUTION ---------------- #
 # ---------------------------------------------------- #
-PROFILE_RESOLUTION = 30
+PROFILE_RESOLUTION = 2
 # ---------------------------------------------------- #
 # ---------------- CHORD DISTRIBUTION ---------------- #
 # ---------------------------------------------------- #
-CHORD_DISTRIBUTION = lambda r: r
+CHORD_DISTRIBUTION = lambda r:  3.0 * (1 - 0.7 * r**1.5)
 # ---------------------------------------------------- #
 # ---------------- TWIST DISTRIBUTION ---------------- #
 # ---------------------------------------------------- #
-TWIST_DISTRIBUTION = lambda r: 0
+TWIST_DISTRIBUTION = lambda r: math.radians(20 * (1 - r)**1.2)
 # ---------------------------------------------------- #
 # --------------- PROFILE DISTRIBUTION --------------- #  this will consist of the key profiles, the rest will be
 # ---------------------------------------------------- #  filled in based on resolution. Non dimensionalize radial
 INITIAL_PROFILES = []                                  #  position here (easy scaling) (also 0 means hub, 1 means tip)
 
 INITIAL_PROFILES.append({"naca": "2412", "radial_pos": 0.0})
-INITIAL_PROFILES.append({"coordinate_file": "2132.dat", "radial_pos": 0.6})
+INITIAL_PROFILES.append({"naca": "2412", "radial_pos": 1})
 # ---------------------------------------------------- #
 # --------------- EXTRA CONFIG PARAMS ---------------- #
 # ---------------------------------------------------- #
