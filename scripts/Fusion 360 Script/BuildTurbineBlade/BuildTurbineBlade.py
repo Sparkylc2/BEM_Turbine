@@ -9,25 +9,21 @@ TWIST_DISTRIBUTION = lambda r: math.radians(20 * (1 - r)**1.2)
 
 
 def generate_le_guide(root, to_du):
-    le_sketch = root.sketches.add(root.xYConstructionPlane)
-    le_obj_collection = adsk.core.ObjectCollection.create()
+    rs      = linspace(0.0, 1.0, 50)
+    points3d = adsk.core.ObjectCollection.create()
 
-    r = linspace(0.0, 1.0, 100)
+    for r in rs:
+        z   = to_du(r * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS)
+        c   = to_du(CHORD_DISTRIBUTION(r))
+        t   = TWIST_DISTRIBUTION(r)
 
-    r_arr = [to_du(curr_r * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS) for curr_r in r]
-    chord_arr = [to_du(CHORD_DISTRIBUTION(curr_r)) for curr_r in r]
-    twist_arr = [TWIST_DISTRIBUTION(curr_r) for curr_r in r]
+        le_model = transform([(0.0, 0.0)], c, t, z_off=z)[0]
+        points3d.add(le_model)
 
-    pts = []
-    for (chord, twist, r) in zip(chord_arr, twist_arr, r_arr):
-        pts.append(transform([(1.0, 0.0)], chord, twist, r))
-
-    for pt in pts:
-        le_obj_collection.add(le_sketch.modelToSketchSpace(pt))
-
-    le_spline = le_sketch.sketchCurves.sketchFittedSplines.add(le_obj_collection)
-    return root.features.createPath(le_spline)
-
+    sketch3d   = root.sketches.add3D()
+    spline3d   = sketch3d.sketchCurves.sketchFittedSplines3D.add(points3d)
+    le_path = root.features.createPath(spline3d)
+    return le_path
 def generate_te_guide(root, to_du):
     rail_sk   = root.sketches.add(root.yZConstructionPlane)
     z_min = to_du(HUB_RADIUS)
