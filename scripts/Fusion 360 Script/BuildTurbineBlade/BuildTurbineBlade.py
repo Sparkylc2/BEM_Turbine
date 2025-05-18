@@ -2,14 +2,62 @@ import os, json, math, traceback
 from pathlib import Path
 import adsk.core, adsk.fusion
 
+HUB_RADIUS = 0.1
+TIP_RADIUS = 0.3
+CHORD_DISTRIBUTION = lambda r:  3.0 * (1 - 0.7 * r**1.5)
+TWIST_DISTRIBUTION = lambda r: math.radians(20 * (1 - r)**1.2)
+
+
+def generate_le_guide(root, to_du):
+    le_sketch = root.sketches.add(root.xYConstructionPlane)
+    le_obj_collection = adsk.core.ObjectCollection.create()
+
+    r = linspace(0.0, 1.0, 100)
+
+    r_arr = [to_du(curr_r * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS) for curr_r in r]
+    chord_arr = [to_du(CHORD_DISTRIBUTION(curr_r)) for curr_r in r]
+    twist_arr = [TWIST_DISTRIBUTION(curr_r) for curr_r in r]
+
+    pts = []
+    for (chord, twist, r) in zip(chord_arr, twist_arr, r_arr):
+        pts.append(transform([(1.0, 0.0)], chord, twist, r))
+
+    for pt in pts:
+        le_obj_collection.add(le_sketch.modelToSketchSpace(pt))
+
+    le_spline = le_sketch.sketchCurves.sketchFittedSplines.add(le_obj_collection)
+    return root.features.createPath(le_spline)
+
+def generate_te_guide(root, to_du):
+    rail_sk   = root.sketches.add(root.yZConstructionPlane)
+    z_min = to_du(HUB_RADIUS)
+    z_max = to_du(TIP_RADIUS)
+    # z_min = to_du(sections[0]["radial_pos_m"])
+    # z_max = to_du(sections[-1]["radial_pos_m"])
+    p0 = rail_sk.modelToSketchSpace(adsk.core.Point3D.create(0, 0, z_min))
+    p1 = rail_sk.modelToSketchSpace(adsk.core.Point3D.create(0, 0, z_max))
+    rail_line = rail_sk.sketchCurves.sketchLines.addByTwoPoints(p0, p1)
+    return root.features.createPath(rail_line)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def linspace(start, stop, np):
     """
     Emulate Matlab linspace
     """
     return [start + (stop - start) * i / (np - 1) for i in range(np)]
-
-
 def interpolate(xa, ya, queryPoints):
     """
     A cubic spline interpolation on a given set of points (x,y)
@@ -79,8 +127,6 @@ def interpolate(xa, ya, queryPoints):
         results[i] = a * ya[klo] + b * ya[khi] + ((a * a * a - a) * y2[klo] + (b * b * b - b) * y2[khi]) * (h * h) / 6.0
 
     return results
-
-
 def naca4(number, n, finite_te=False, half_cosine_spacing=False):
     """
     Returns 2*n+1 points in [0 1] for the given 4 digit NACA number string
@@ -141,8 +187,6 @@ def naca4(number, n, finite_te=False, half_cosine_spacing=False):
     Z = yu[::-1] + yl[1:]
 
     return X, Z
-
-
 def naca5(number, n, finite_te=False, half_cosine_spacing=False):
     """
     Returns 2*n+1 points in [0 1] for the given 5 digit NACA number string
@@ -214,8 +258,6 @@ def naca5(number, n, finite_te=False, half_cosine_spacing=False):
     Z = yu[::-1] + yl[1:]
 
     return X, Z
-
-
 def naca(number, n, finite_te=False, half_cosine_spacing=False):
     if len(number) == 4:
         return naca4(number, n, finite_te, half_cosine_spacing)
@@ -224,38 +266,28 @@ def naca(number, n, finite_te=False, half_cosine_spacing=False):
     else:
         raise Exception
 
-
-def parse_line(line):
-    try:
-        values = line.strip().split()
-        return float(values[0]), float(values[1])
-    except (IndexError, ValueError):
-        return None
-
-
 def read_dat(path):
     x = []
     y = []
     with open(path, "r") as fp:
         for line in fp:
-            parsed = parse_line(line)
-            if parsed is not None:
-                a, b = parsed
-                x.append(a)
-                y.append(b)
-        if x[0] != x[-1] or y[0] != y[-1]:
+            try:
+                values = line.strip().split()
+                x.append(float(values[0]))
+                y.append(float(values[1]))
+            except ValueError:
+                continue
+        if len(x) > 0 and (x[0] != x[-1] or y[0] != y[-1]):
             x.append(x[0])
             y.append(y[0])
-    return x, y
+    return (x, y)
+
 
 
 
 def get_naca_coordinates(naca_code):
     pts = naca(naca_code, 200)
     return pts
-
-
-# ── new helper ───────────────────────────────────────────────────────────
 def reorder_to_te_clockwise(points):
     if isinstance(points[0], tuple):
         pts = points
@@ -266,7 +298,7 @@ def reorder_to_te_clockwise(points):
     te_candidates = [i for i, p in enumerate(pts) if abs(p[0] - max_x) < 1e-6]
     start = te_candidates[0]
 
-    ordered = pts[start:] + pts[1:start + 1]
+    ordered = pts[start:] + pts[1:start+1]
 
     area = 0.0
     for (x0, y0), (x1, y1) in zip(ordered, ordered[1:]):
@@ -277,42 +309,54 @@ def reorder_to_te_clockwise(points):
     return ordered
 
 
-def to_object_collection(points, chord_len, twist_rad):
-    oc = adsk.core.ObjectCollection.create()
+def transform(points, chord_len, twist_rad, z_off = None):
+    pts = []
     cos_t, sin_t = math.cos(twist_rad), math.sin(twist_rad)
     for x, y in points:
         px = (x - 1.0) * chord_len
         py = y * chord_len
         rx = px * cos_t - py * sin_t
         ry = px * sin_t + py * cos_t
-        oc.add(adsk.core.Point3D.create(rx, ry, 0))
+        pts.append(adsk.core.Point3D.create(rx, ry, 0.0 if z_off is None else z_off))
+    return pts
+def to_object_collection(points, chord_len, twist_rad):
+    oc = adsk.core.ObjectCollection.create()
+    pts = transform(points, chord_len, twist_rad, z_off = None)
+    for pt in pts:
+        oc.add(pt)
     return oc
-
 
 def run(context):
     ui = None
     try:
         app = adsk.core.Application.get()
-        ui = app.userInterface
+        ui  = app.userInterface
 
         fd = ui.createFileDialog()
         fd.isMultiSelectEnabled = False
-        fd.title = "Select blade JSON specification"
+        fd.title  = "Select blade JSON specification"
         fd.filter = "JSON (*.json)"
         if fd.showOpen() != adsk.core.DialogResults.DialogOK:
             return
         json_path = Path(fd.filename)
 
+
+
         ROOT_DIR = Path(__file__).resolve().parent.parent
         airfoil_dir = ROOT_DIR / "naca_data" / "airfoil_profiles"
         save_path = ROOT_DIR / "naca_data" / "blade_models" / f"{Path(json_path).stem}.f3d"
 
-        fol = ui.createFolderDialog()
-        fol.title = "Select folder containing .dat air-foil files"
-        if fol.showDialog() != adsk.core.DialogResults.DialogOK:
-            return
-        airfoil_dir = Path(fol.folder)
 
+
+
+        #
+        #
+        # fol = ui.createFolderDialog()
+        # fol.title = "Select folder containing .dat air-foil files"
+        # if fol.showDialog() != adsk.core.DialogResults.DialogOK:
+        #     return
+        # airfoil_dir = Path(fol.folder)
+        #
         # sf = ui.createFileDialog()
         # sf.title  = "Save blade as Fusion archive"
         # sf.filter = "Fusion Archive (*.f3d)"
@@ -321,12 +365,12 @@ def run(context):
         #     return
         # save_path = Path(sf.filename)
 
-        doc = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
+        doc    = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
         design = adsk.fusion.Design.cast(app.activeProduct)
-        root = design.rootComponent
-        um = design.unitsManager
-        du = um.defaultLengthUnits
-        to_du = lambda m: um.convert(m, "m", du)
+        root   = design.rootComponent
+        um     = design.unitsManager
+        du     = um.defaultLengthUnits
+        to_du  = lambda m: um.convert(m, "m", du)
 
         with open(json_path, "r") as fp:
             spec = json.load(fp)
@@ -335,16 +379,15 @@ def run(context):
         n_blades = spec.get("num_blades", 1)
 
         base_plane = root.xYConstructionPlane
-        profiles = []
+        profiles   = []
 
         for sec in sections:
-            z_off = to_du(sec["radial_pos_m"])
-            chord = to_du(sec["chord_len_m"])
-            twist = sec["twist_rad"]
+            z_off  = to_du(sec["radial_pos_m"])
+            chord  = to_du(sec["chord_len_m"])
+            twist  = sec["twist_rad"]
 
             if sec.get("coordinate_file"):
-                file = sec["coordinate_file"] + ".dat"
-                foil = airfoil_dir / file
+                foil = airfoil_dir / sec["coordinate_file"].with_suffix(".dat")
                 pts2d = reorder_to_te_clockwise(read_dat(foil))
             else:
                 pts2d = reorder_to_te_clockwise(get_naca_coordinates(sec.get("naca")))
@@ -359,42 +402,43 @@ def run(context):
             )
             profiles.append(sk.profiles.item(0))
 
-        lofts = root.features.loftFeatures
-        lf_in = lofts.createInput(
-            adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+
+
+        lofts  = root.features.loftFeatures
+        lf_in  = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
         for pr in profiles:
             lf_in.loftSections.add(pr)
 
-        yz_plane = root.yZConstructionPlane
-        rail_sk = root.sketches.add(yz_plane)
+        le_path = generate_le_guide(root, to_du)
+        rail_path = generate_te_guide(root, to_du)
 
-        z_min = to_du(sections[0]["radial_pos_m"])
-        z_max = to_du(sections[-1]["radial_pos_m"])
+        lofts       = root.features.loftFeatures
+        blade_body  = None
 
-        p0 = rail_sk.modelToSketchSpace(adsk.core.Point3D.create(0, 0, z_min))
-        p1 = rail_sk.modelToSketchSpace(adsk.core.Point3D.create(0, 0, z_max))
+        lf_in = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation if blade_body is None else adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        for pr in profiles:
+            lf_in.loftSections.add(pr)
 
-        rail_line = rail_sk.sketchCurves.sketchLines.addByTwoPoints(p0, p1)
-        rail_path = root.features.createPath(rail_line)
+        lf_in.centerLineOrRails.addCenterLine(le_path)
+        lf_in.centerLineOrRails.addRail(rail_path)
 
-        lofts = root.features.loftFeatures
-        blade_body = None
+        # for i in range(1, len(profiles)):
+        #     lf_in = lofts.createInput(
+        #         adsk.fusion.FeatureOperations.NewBodyFeatureOperation
+        #         if blade_body is None
+        #         else adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        #
+        #     lf_in.loftSections.add(profiles[i - 1])
+        #     lf_in.loftSections.add(profiles[i])
+        #     lf_in.centerLineOrRails.addCenterLine(le_path)
+        #     lf_in.centerLineOrRails.addRail(rail_path)
+        #
+        #     loft = lofts.add(lf_in)
+        #
+        #     if blade_body is None:
+        #         blade_body = loft.bodies.item(0)
 
-        for i in range(1, len(profiles)):
-            lf_in = lofts.createInput(
-                adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-                if blade_body is None
-                else adsk.fusion.FeatureOperations.JoinFeatureOperation)
-
-            lf_in.loftSections.add(profiles[i - 1])
-            lf_in.loftSections.add(profiles[i])
-            lf_in.centerLineOrRails.addCenterLine(rail_path)
-
-            loft = lofts.add(lf_in)
-
-            if blade_body is None:
-                blade_body = loft.bodies.item(0)
 
         # exp_mgr = design.exportManager
         # opts    = exp_mgr.createFusionArchiveExportOptions(str(save_path))
