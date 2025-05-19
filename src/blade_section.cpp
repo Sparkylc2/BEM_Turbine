@@ -89,7 +89,7 @@ void BladeSection::update_cl_cd() {
 
 
     if (std::isnan(cl_val.value()) || std::isnan(cd_val.value())) {
-        // std::cerr << "XFOIL failed to generate points for airfoil: " + (naca_code.empty() ? cfg.coord_file : naca_code) << std::endl;
+        std::cerr << "XFOIL failed to generate points for airfoil: " + (naca_code.empty() ? cfg.coord_file : naca_code) << std::endl;
     }
 
     // if (!extrap.is_in_original_range(alpha))

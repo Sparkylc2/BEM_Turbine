@@ -57,6 +57,13 @@ def generate_te_guide(root, to_du):
     return root.features.createPath(rail_line)
 
 
+def generate_rail_guide(point_a, point_b, root):
+    rail_sk = root.sketches.add(root.yZConstructionPlane)
+    p0 = rail_sk.modelToSketchSpace(point_a)
+    p1 = rail_sk.modelToSketchSpace(point_b)
+    rail_line = rail_sk.sketchCurves.sketchLines.addByTwoPoints(p0, p1)
+    return root.features.createPath(rail_line)
+
 
 
 
@@ -95,25 +102,25 @@ def get_naca_coordinates(naca_code):
 
     return (x, y)
 def reorder_to_te_clockwise(points):
-    return list(zip(*points))
-    # if isinstance(points[0], tuple):
-    #     pts = points
-    # else:
-    #     pts = list(zip(*points))
-    #
-    # max_x = max(p[0] for p in pts)
-    # te_candidates = [i for i, p in enumerate(pts) if abs(p[0] - max_x) < 1e-6]
-    # start = te_candidates[0]
-    #
-    # ordered = pts[start:] + pts[1:start+1]
-    #
-    # area = 0.0
-    # for (x0, y0), (x1, y1) in zip(ordered, ordered[1:]):
-    #     area += (x1 - x0) * (y1 + y0)
-    # if area > 0:
-    #     ordered = [ordered[0]] + ordered[:0:-1]
-    #
-    # return ordered
+    # return list(zip(*points))
+    if isinstance(points[0], tuple):
+        pts = points
+    else:
+        pts = list(zip(*points))
+
+    max_x = max(p[0] for p in pts)
+    te_candidates = [i for i, p in enumerate(pts) if abs(p[0] - max_x) < 1e-6]
+    start = te_candidates[0]
+
+    ordered = pts[start:] + pts[1:start+1]
+
+    area = 0.0
+    for (x0, y0), (x1, y1) in zip(ordered, ordered[1:]):
+        area += (x1 - x0) * (y1 + y0)
+    if area > 0:
+        ordered = [ordered[0]] + ordered[:0:-1]
+
+    return ordered
 
 def transform(points, chord_len, twist_rad, z_off = None):
     pts = []
@@ -187,7 +194,9 @@ def run(context):
         n_blades = spec.get("num_blades", 1)
 
         base_plane = root.xYConstructionPlane
-        profiles   = []
+        profiles = []
+    # In your section loop, store the leading edge points
+        le_points = []
 
         for sec in sections:
             z_off  = to_du(sec["radial_pos_m"])
@@ -201,6 +210,14 @@ def run(context):
             else:
                 pts2d = reorder_to_te_clockwise(get_naca_coordinates(sec.get("naca")))
 
+            # Find the leading edge point (point with minimum x value)
+            le_idx = min(range(len(pts2d)), key=lambda i: pts2d[i][0])
+            le_2d = pts2d[le_idx]
+
+            # Transform to 3D space with correct position
+            le_3d = transform([le_2d], chord, twist, z_off=z_off)[0]
+            le_points.append(le_3d)
+
             p_in = root.constructionPlanes.createInput()
             p_in.setByOffset(base_plane, adsk.core.ValueInput.createByReal(z_off))
             plane = root.constructionPlanes.add(p_in)
@@ -211,33 +228,36 @@ def run(context):
             )
             profiles.append(sk.profiles.item(0))
 
+            # Create rails between adjacent leading edge points
+            le_rails = []
+            for i in range(len(le_points) - 1):
+                rail = generate_rail_guide(le_points[i], le_points[i+1], root)
+                le_rails.append(rail)
 
+            # Use these rails in your lofting process
+            lofts = root.features.loftFeatures
+            te_path = generate_te_guide(root, to_du)
+            blade_body = None
 
-        le_path = generate_le_guide(root, to_du, sections)
-        te_path = generate_te_guide(root, to_du)
+            for i in range(1, len(profiles)):
+                lf_in = lofts.createInput(
+                    adsk.fusion.FeatureOperations.NewBodyFeatureOperation
+                    if blade_body is None
+                    else adsk.fusion.FeatureOperations.JoinFeatureOperation
+                )
 
-        lofts = root.features.loftFeatures
-        blade_body = None
+                lf_in.centerLineOrRails.addRail(te_path)     # Trailing edge rail
+                lf_in.centerLineOrRails.addRail(le_rails[i-1])  # Leading edge rail for this section pair
 
-        for i in range(1, len(profiles)):
-            lf_in = lofts.createInput(
-                adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-                if blade_body is None
-                else adsk.fusion.FeatureOperations.JoinFeatureOperation
-            )
+                lf_in.loftSections.add(profiles[i-1])
+                lf_in.loftSections.add(profiles[i])
 
-            lf_in.centerLineOrRails.addRail(te_path)
-            lf_in.centerLineOrRails.addCenterLine(le_path)
+                lf_in.isSolid = True
 
-            lf_in.loftSections.add(profiles[i-1])
-            lf_in.loftSections.add(profiles[i])
+                loft = lofts.add(lf_in)
 
-            lf_in.isSolid = True
-
-            loft = lofts.add(lf_in)
-
-            if blade_body is None:
-                blade_body = loft.bodies.item(0)
+                if blade_body is None:
+                    blade_body = loft.bodies.item(0)
 
         #
         #

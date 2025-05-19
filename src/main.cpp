@@ -51,7 +51,7 @@ int main() {
 
     for (auto tsr: tsr_vec) {
         std::cout << "TSR: " << tsr << std::endl;
-        Rotor rotor("blade_profile_test");
+        Rotor rotor("NREL_5MW_Blade");
         rotor.initialize_rotor(tsr);
 
         rotor.run_bem();
