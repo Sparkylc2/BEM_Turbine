@@ -51,7 +51,7 @@ int main() {
 
     for (auto tsr: tsr_vec) {
         std::cout << "TSR: " << tsr << std::endl;
-        Rotor rotor("SG6043_optimal_distribution");
+        Rotor rotor("blade_profile_test");
         rotor.initialize_rotor(tsr);
 
         rotor.run_bem();

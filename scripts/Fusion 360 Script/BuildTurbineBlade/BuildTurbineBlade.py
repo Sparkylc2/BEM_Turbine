@@ -4,66 +4,51 @@ import adsk.core, adsk.fusion
 
 
 
-HUB_RADIUS = 0.05
-TIP_RADIUS = 1.0
-CHORD_DISTRIBUTION = lambda r:  8 * math.pi * r / (2 * 1.415) * (1 - math.cos(TWIST_DISTRIBUTION(r)))
-TWIST_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / 3.5)
+HUB_RADIUS = 0.02
+TIP_RADIUS = 0.227
+NUM_BLADES = 2
+CL_DES = 1.012
+A_DES = math.radians(2.25)
+TSR = 3.5
+CHORD_DISTRIBUTION = lambda r:  8 * math.pi * r / (NUM_BLADES * CL_DES) * (1 - math.cos(PHI_DISTRIBUTION(r)))
+PHI_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / (TSR * r/TIP_RADIUS))
+TWIST_DISTRIBUTION = lambda r: PHI_DISTRIBUTION(r) - A_DES
 
 
-def generate_le_guide(root, to_du, n_samples=100):
-    pts = []
-    for r in linspace(0.0, 1.0, n_samples):
-        # if r == 0.0:
-        #     z = to_du(-1e-3)
-        # elif r == 1.0:
-        #     z = to_du(TIP_RADIUS - HUB_RADIUS + 1e-3)
-        # else:
-        z = to_du(r * (TIP_RADIUS - HUB_RADIUS))
+def generate_le_guide(root, to_du, sections):
+    """Create a leading edge guide using only the section points"""
+    # Create points for each section with EXACT leading edge coordinates
+    section_points = []
+    for sec in sections:
+        z_off = to_du(sec["radial_pos_m"])
+        chord = to_du(sec["chord_len_m"])
+        twist = sec["twist_rad"]
 
-        chord = to_du(CHORD_DISTRIBUTION(r))
-        tw    = TWIST_DISTRIBUTION(r)
+        # Use exact leading edge point (0,0) in airfoil coordinates
+        le_pt = transform([(0.0, 0.0)], chord, twist, z_off=z_off)[0]
+        section_points.append(le_pt)
 
-        pt = transform([(0.0, 0.0)], chord, tw, z_off=z)[0]
-
-        offset = 5e-4
-        offset_vec = [to_du(offset * math.cos(tw)), to_du(offset * math.sin(tw))]
-
-        pt = adsk.core.Point3D.create(pt.x + offset_vec[0], pt.y + offset_vec[1], pt.z)
-
-        pts.append(pt)
-    #
-    # curves = []
-    # for p0, p1 in zip(pts[:-1], pts[1:]):
-    #     curves.append(adsk.core.Line3D.create(p0, p1))
-    #
-    # temp_mgr  = adsk.fusion.TemporaryBRepManager.get()
-    # wire_bodies = temp_mgr.createWireFromCurves(curves, True)
-    # wire_body = wire_bodies[0]
-    #
-    # base_feat = root.features.baseFeatures.add()
-    # base_feat.startEdit()
-    # persisted = root.bRepBodies.add(wire_body, base_feat)
-    # base_feat.finishEdit()
-    #
-    # edge   = persisted.edges.item(0)
-    # lepath = root.features.createPath(edge, True)
-    # return lepath
-
+    # Create sketch for the guide curve
     sketch_plane = root.xYConstructionPlane
     sk = root.sketches.add(sketch_plane)
 
+    # Add points to collection
     obj_coll = adsk.core.ObjectCollection.create()
-    for pt in pts:
+    for pt in section_points:
         obj_coll.add(pt)
 
+    # Create a spline through these points
     spline = sk.sketchCurves.sketchFittedSplines.add(obj_coll)
+    spline.isConstruction = True  # Make it construction geometry so it won't be consumed
 
+    # Return the path
     path = root.features.createPath(spline)
     return path
+
 def generate_te_guide(root, to_du):
     rail_sk   = root.sketches.add(root.yZConstructionPlane)
     z_min = 0.0
-    z_max = to_du(TIP_RADIUS - HUB_RADIUS)
+    z_max = to_du(TIP_RADIUS)
     # z_min = to_du(sections[0]["radial_pos_m"])
     # z_max = to_du(sections[-1]["radial_pos_m"])
     p0 = rail_sk.modelToSketchSpace(adsk.core.Point3D.create(0, 0, z_min))
@@ -224,48 +209,58 @@ def run(context):
             sk.sketchCurves.sketchFittedSplines.add(
                 to_object_collection(pts2d, chord, twist)
             )
-            profiles.append(sk.profiles.item)
+            profiles.append(sk.profiles.item(0))
 
 
 
-        # lofts  = root.features.loftFeatures
-        # lf_in  = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+        le_path = generate_le_guide(root, to_du, sections)
+        te_path = generate_te_guide(root, to_du)
 
-        # for pr in profiles:
-        #     lf_in.loftSections.add(pr)
-        #
-        # # le_path = generate_le_guide(root, to_du)
-        # rail_path = generate_te_guide(root, to_du)
-        #
-        # lofts       = root.features.loftFeatures
-        # blade_body  = None
-        # #
-        # lf_in.centerLineOrRails.addRail(rail_path)
-        # lf_in.centerLineOrRails.addCenterLine(le_path)
-        # loft = lofts.add(lf_in)
-
-
-
-        le_path = generate_le_guide(root, to_du)
-        rail_path = generate_te_guide(root, to_du)
-
-        lofts       = root.features.loftFeatures
-        blade_body  = None
+        lofts = root.features.loftFeatures
+        blade_body = None
 
         for i in range(1, len(profiles)):
             lf_in = lofts.createInput(
                 adsk.fusion.FeatureOperations.NewBodyFeatureOperation
                 if blade_body is None
-                else adsk.fusion.FeatureOperations.JoinFeatureOperation)
+                else adsk.fusion.FeatureOperations.JoinFeatureOperation
+            )
 
-            lf_in.loftSections.add(profiles[i - 1])
+            lf_in.centerLineOrRails.addRail(te_path)
+            lf_in.centerLineOrRails.addCenterLine(le_path)
+
+            lf_in.loftSections.add(profiles[i-1])
             lf_in.loftSections.add(profiles[i])
-            # lf_in.centerLineOrRails.addCenterLine(rail_path)
+
+            lf_in.isSolid = True
 
             loft = lofts.add(lf_in)
 
             if blade_body is None:
                 blade_body = loft.bodies.item(0)
+
+        #
+        #
+        # le_path = generate_le_guide(root, to_du)
+        # rail_path = generate_te_guide(root, to_du)
+        #
+        # lofts       = root.features.loftFeatures
+        # blade_body  = None
+        #
+        # for i in range(1, len(profiles)):
+        #     lf_in = lofts.createInput(
+        #         adsk.fusion.FeatureOperations.NewBodyFeatureOperation
+        #         if blade_body is None
+        #         else adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        #
+        #     lf_in.loftSections.add(profiles[i - 1])
+        #     lf_in.loftSections.add(profiles[i])
+        #     # lf_in.centerLineOrRails.addCenterLine(rail_path)
+        #
+        #     loft = lofts.add(lf_in)
+        #
+        #     if blade_body is None:
+        #         blade_body = loft.bodies.item(0)
 
 
         # exp_mgr = design.exportManager

@@ -1,6 +1,5 @@
 import math
 
-import numpy as np
 from create_blade_functions import *
 
 
@@ -45,11 +44,14 @@ PROFILE_RESOLUTION = 20
 # ---------------------------------------------------- #
 # ------------- CHORD/TWIST DISTRIBUTION ------------- #
 # ---------------------------------------------------- #
-CHORD_DISTRIBUTION = lambda r:  0.2 * 8 * math.pi * r / (2 * 1.02) * (1 - math.cos(TWIST_DISTRIBUTION(r) + math.radians(2.3)))
-TWIST_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(TIP_RADIUS / (TSR * r)) - math.radians(2.3)
+CHORD_DISTRIBUTION = lambda r:  8 * math.pi * r / (NUM_BLADES * CL_DES) * (1 - math.cos(PHI_DISTRIBUTION(r)))
+PHI_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / (TSR * r/TIP_RADIUS))
+TWIST_DISTRIBUTION = lambda r: PHI_DISTRIBUTION(r) - A_DES
 # ---------------------------------------------------- #
-# ---------------- TWIST DISTRIBUTION ---------------- #
+# ------------------ DESIGN PARAMS ------------------- #
 # ---------------------------------------------------- #
+A_DES = math.radians(2.25)
+CL_DES = 1.012
 # ---------------------------------------------------- #
 # --------------- PROFILE DISTRIBUTION --------------- #  this will consist of the key profiles, the rest will be
 # ---------------------------------------------------- #  filled in based on resolution. Non dimensionalize radial
@@ -79,15 +81,14 @@ radial_position_uses_nondimensional_radius = True
 # --------------- CREATE BLADES ARRAY  --------------- #
 # ---------------------------------------------------- #
 profiles = np.array(generate_even_profiles(INITIAL_PROFILES, PROFILE_RESOLUTION))
+
 blades = list(map(lambda profile: Blade(
-    radial_pos_m    =                    profile["radial_pos"]      if not radial_position_uses_nondimensional_radius else (profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS),
-    chord_len_m     = CHORD_DISTRIBUTION((profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS)),
-    twist_rad       = TWIST_DISTRIBUTION((profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS)),
+    radial_pos_m    =                    profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS,
+    chord_len_m     = CHORD_DISTRIBUTION(profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS),
+    twist_rad       = TWIST_DISTRIBUTION(profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS),
     naca            =                    profile["naca"]            if "naca"            in profile else "",
     coordinate_file =                    profile["coordinate_file"] if "coordinate_file" in profile else ""
 ), profiles))
-
-
 
 # ---------------------------------------------------- #
 # ------------- CREATE BLADE PROFILE OBJ ------------- #
