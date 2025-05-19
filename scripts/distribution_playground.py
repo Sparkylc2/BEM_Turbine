@@ -20,25 +20,26 @@ r = np.linspace(hub, tip, 100) # radial position
 phi = 2.0 / 3.0 * np.arctan(1.0 / (tsr * r/tip)) # inflow angle
 beta = phi - a_des # twist angle
 
-chord = (8 * np.pi * r / (B * cl_des) * (1 - np.cos(phi)))/tip # chord length
+chord = (8 * np.pi * r / (B * cl_des) * (1 - np.cos(phi))) # chord length
 
 
 plt.figure(figsize=(10, 6))
-plt.plot(r/tip, chord, label='Chord Length', color='blue')
-# plt.plot(r, beta, label='Twist Angle', color='red')
+plt.plot(r / tip, chord / tip, label="$c = \\frac{8 \\pi r}{B C_{l, des}} (1 - \\cos(\\phi))$", color='blue')
 plt.xlabel('$\\frac{r}{R}$', fontsize=16)
 plt.ylabel('$\\frac{c}{R}$', fontsize=16)
 plt.xlim(0, 1)
 plt.ylim(0, 1)
 plt.title('Blade Chord Length Distribution')
-plt.legend()
+# Let matplotlib handle the legend
+plt.legend(fontsize=16)
 plt.grid()
 plt.show()
 plt.savefig('blade_chord_length_distribution.svg', dpi=300)
 
 
+
 plt.figure(figsize=(10, 6))
-plt.plot(r/tip, beta, label='Twist Angle', color='red')
+plt.plot(r / tip, beta, label='$\\frac{2}{3}\\tan^{-1}(\\frac{1}{\\lambda_r \\frac{r}{R_{tip}}})$', color='red')
 plt.xlabel('$\\frac{r}{R}$', fontsize=16)
 plt.ylabel('$\\beta$  (rad)', fontsize=16)
 plt.xlim(0, 1)
