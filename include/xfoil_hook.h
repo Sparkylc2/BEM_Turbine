@@ -20,7 +20,7 @@ namespace xf {
         // --- flow -------------------------------------------------------------------
         dimensionless_t re     = 1e6;
         dimensionless_t mach   = 0.0;
-        double n_crit = 7.0;
+        double n_crit = 9.0;
         // --- solver -----------------------------------------------------------------
         int    ITER   = 300;
         double VACCEL = 0.01;

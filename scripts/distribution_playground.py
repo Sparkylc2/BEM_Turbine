@@ -1,6 +1,6 @@
 import numpy as np
 from pathlib import Path
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 
 
@@ -22,13 +22,14 @@ chord = 8 * np.pi * r / (B * cl_des) * (1 - np.cos(phi)) # chord length
 
 
 # Plotting the results
-import matplotlib.pyplot as plt
+
 plt.figure(figsize=(10, 6))
 plt.plot(r/tip, chord, label='Chord Length', color='blue')
 # plt.plot(r, beta, label='Twist Angle', color='red')
 plt.xlabel('r/R (non-dimensional)')
 plt.ylabel('Chord Length (m)')
 plt.xlim(0, 1)
+plt.ylim(0, 1)
 plt.title('Blade Chord Length Distribution')
 plt.legend()
 plt.grid()
