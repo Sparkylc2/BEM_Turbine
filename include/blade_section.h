@@ -115,7 +115,7 @@ public:
     [[nodiscard]] newton_t const& g_differential_drag() const { return differential_drag; }
     [[nodiscard]] newton_meter_t const& g_differential_torque() const { return differential_torque; }
     [[nodiscard]] meter_t const& g_differential_radius() const { return differential_radius; }
-
+    [[nodiscard]] xf::Config const& g_cfg() const { return cfg; }
 
 };
 

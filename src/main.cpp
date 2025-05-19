@@ -18,8 +18,9 @@ int main() {
 
     for (auto tsr: tsr_vec) {
         std::cout << "TSR: " << tsr << std::endl;
-        Rotor rotor("blade a");
+        Rotor rotor("blade_profile_test");
         rotor.initialize_rotor(tsr);
+
         rotor.run_bem();
         produced_power_vec.push_back(rotor.g_produced_power().value());
         total_power_vec.push_back(rotor.g_total_power().value());

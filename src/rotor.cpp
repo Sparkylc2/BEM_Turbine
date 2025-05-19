@@ -80,6 +80,9 @@ void Rotor::init_blade_sections(nlohmann::json& j) {
                node["coordinate_file"].get<std::string>()
 
        );
+
+        std::cout << this->blade_sections.back().g_cfg().coord_file << std::endl;
+
     }
 }
 

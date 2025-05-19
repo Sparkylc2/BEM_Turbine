@@ -1,22 +1,25 @@
 {
     "blades": [
         {
-            "radial_pos_m": 0.1,
-            "chord_len_m": 2.933592169136464,
-            "twist_rad": 0.30760853019677215,
-            "naca": "2412",
-            "coordinate_file": ""
+
         },
         {
-            "radial_pos_m": 0.3,
-            "chord_len_m": 2.6549347887717456,
-            "twist_rad": 0.2275228458729879,
-            "naca": "2412",
-            "coordinate_file": ""
+            "radial_pos_m": 0.0,
+            "chord_len_m": 0.0,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 2.9,
+            "chord_len_m": 0.15241233203828256,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
         }
     ],
     "rotor_hub_radius_m": 0.1,
-    "rotor_radius_m": 0.3,
+    "rotor_radius_m": 3.0,
     "num_blades": 2,
     "tip_speed_ratio": 3.5,
     "wind_speed_mps": 10.0

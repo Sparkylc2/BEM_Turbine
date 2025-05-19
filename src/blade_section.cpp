@@ -16,12 +16,15 @@ void BladeSection::initialize_blade_section() {
     cfg.naca = naca_code;
     if (!coordinate_file.empty()) {
         if (parent_rotor.runner.get_runtime() == "docker") {
-            cfg.coord_file = "/work/naca_data/airfoil_profiles/" + coordinate_file;
+            cfg.coord_file = "naca_data/airfoil_profiles/" + coordinate_file;
+            // std::cout << "Using coordinate file: " << cfg.coord_file << "\n";
         } else {
             cfg.coord_file = "../naca_data/airfoil_profiles/" + coordinate_file;
         }
     }
     cfg.alpha = 0.0_deg;
+
+
 
 
     a = dimensionless_t(1.0 / 3.0);
@@ -54,15 +57,22 @@ void BladeSection::update_cl_cd() {
             XFOILRunner::configure_airfoil(ss, cfg);
             XFOILRunner::configure_solver(ss, cfg);
             XFOILRunner::set_alpha_sweep(ss, cfg);
-            XFOILRunner::save_airfoil(ss, cfg);
+            // XFOILRunner::save_airfoil(ss, cfg);
             XFOILRunner::quit(ss);
         };
 
-
-        if (!runner.run(cfg, basePolar, routine) || basePolar.pts.empty()) {
-            std::cerr << "[XFOIL]   failed for airfoil " << naca_code
-                      << " – using flat-plate model\n";
+        try {
+            if (!runner.run(cfg, basePolar, routine) || basePolar.pts.empty()) {
+                if (naca_code.empty()) {
+                    // std::cerr << "[XFOIL] failed for airfoil file: " << coordinate_file << "\n";
+                } else {
+                    // std::cerr << "[XFOIL] failed for airfoil: " << naca_code << "\n";
+                }
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "XFOIL exception: " << e.what() << std::endl;
         }
+
 
         basePolars.emplace(naca_code, basePolar);
     } else {
@@ -77,7 +87,7 @@ void BladeSection::update_cl_cd() {
 
 
     if (std::isnan(cl_val.value()) || std::isnan(cd_val.value())) {
-        throw std::runtime_error("XFOIL failed to generate points for Re=" + std::to_string(cfg.re.value()));
+        // std::cerr << "XFOIL failed to generate points for airfoil: " + (naca_code.empty() ? cfg.coord_file : naca_code) << std::endl;
     }
 
     // if (!extrap.is_in_original_range(alpha))

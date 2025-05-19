@@ -2,38 +2,289 @@ import os, json, math, traceback
 from pathlib import Path
 import adsk.core, adsk.fusion
 
+
+
 HUB_RADIUS = 0.1
-TIP_RADIUS = 0.3
-CHORD_DISTRIBUTION = lambda r:  3.0 * (1 - 0.7 * r**1.5)
-TWIST_DISTRIBUTION = lambda r: math.radians(20 * (1 - r)**1.2)
+TIP_RADIUS = 3.0
+CHORD_DISTRIBUTION = lambda r:  8 * math.pi * r / (2 * 1.415) * (1 - math.cos(TWIST_DISTRIBUTION(r)))
+TWIST_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / 3.5)
 
 
-def generate_le_guide(root, to_du):
-    rs      = linspace(0.0, 1.0, 50)
-    points3d = adsk.core.ObjectCollection.create()
+def generate_le_guide(root, to_du, n_samples=100):
+    pts = []
+    for r in linspace(0.0, 1.0, n_samples):
+        # if r == 0.0:
+        #     z = to_du(-1e-3)
+        # elif r == 1.0:
+        #     z = to_du(TIP_RADIUS - HUB_RADIUS + 1e-3)
+        # else:
+        z = to_du(r * (TIP_RADIUS - HUB_RADIUS))
 
-    for r in rs:
-        z   = to_du(r * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS)
-        c   = to_du(CHORD_DISTRIBUTION(r))
-        t   = TWIST_DISTRIBUTION(r)
+        chord = to_du(CHORD_DISTRIBUTION(r))
+        tw    = TWIST_DISTRIBUTION(r)
 
-        le_model = transform([(0.0, 0.0)], c, t, z_off=z)[0]
-        points3d.add(le_model)
+        pt = transform([(0.0, 0.0)], chord, tw, z_off=z)[0]
 
-    sketch3d   = root.sketches.add3D()
-    spline3d   = sketch3d.sketchCurves.sketchFittedSplines3D.add(points3d)
-    le_path = root.features.createPath(spline3d)
-    return le_path
+        offset = 5e-4
+        offset_vec = [to_du(offset * math.cos(tw)), to_du(offset * math.sin(tw))]
+
+        pt = adsk.core.Point3D.create(pt.x + offset_vec[0], pt.y + offset_vec[1], pt.z)
+
+        pts.append(pt)
+    #
+    # curves = []
+    # for p0, p1 in zip(pts[:-1], pts[1:]):
+    #     curves.append(adsk.core.Line3D.create(p0, p1))
+    #
+    # temp_mgr  = adsk.fusion.TemporaryBRepManager.get()
+    # wire_bodies = temp_mgr.createWireFromCurves(curves, True)
+    # wire_body = wire_bodies[0]
+    #
+    # base_feat = root.features.baseFeatures.add()
+    # base_feat.startEdit()
+    # persisted = root.bRepBodies.add(wire_body, base_feat)
+    # base_feat.finishEdit()
+    #
+    # edge   = persisted.edges.item(0)
+    # lepath = root.features.createPath(edge, True)
+    # return lepath
+
+    sketch_plane = root.xYConstructionPlane
+    sk = root.sketches.add(sketch_plane)
+
+    obj_coll = adsk.core.ObjectCollection.create()
+    for pt in pts:
+        obj_coll.add(pt)
+
+    spline = sk.sketchCurves.sketchFittedSplines.add(obj_coll)
+
+    path = root.features.createPath(spline)
+    return path
 def generate_te_guide(root, to_du):
     rail_sk   = root.sketches.add(root.yZConstructionPlane)
-    z_min = to_du(HUB_RADIUS)
-    z_max = to_du(TIP_RADIUS)
+    z_min = 0.0
+    z_max = to_du(TIP_RADIUS - HUB_RADIUS)
     # z_min = to_du(sections[0]["radial_pos_m"])
     # z_max = to_du(sections[-1]["radial_pos_m"])
     p0 = rail_sk.modelToSketchSpace(adsk.core.Point3D.create(0, 0, z_min))
     p1 = rail_sk.modelToSketchSpace(adsk.core.Point3D.create(0, 0, z_max))
     rail_line = rail_sk.sketchCurves.sketchLines.addByTwoPoints(p0, p1)
     return root.features.createPath(rail_line)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def read_dat(path):
+    x = []
+    y = []
+    with open(path, "r") as fp:
+        for line in fp:
+            try:
+                values = line.strip().split()
+                x.append(float(values[0]))
+                y.append(float(values[1]))
+            except ValueError:
+                continue
+        if len(x) > 0 and (x[0] != x[-1] or y[0] != y[-1]):
+            x.append(x[0])
+            y.append(y[0])
+    return (x, y)
+
+
+
+
+def get_naca_coordinates(naca_code):
+    x, y = naca(naca_code, 200)
+    x.append(x[0])
+    y.append(y[0])
+
+    return (x, y)
+def reorder_to_te_clockwise(points):
+    return list(zip(*points))
+    # if isinstance(points[0], tuple):
+    #     pts = points
+    # else:
+    #     pts = list(zip(*points))
+    #
+    # max_x = max(p[0] for p in pts)
+    # te_candidates = [i for i, p in enumerate(pts) if abs(p[0] - max_x) < 1e-6]
+    # start = te_candidates[0]
+    #
+    # ordered = pts[start:] + pts[1:start+1]
+    #
+    # area = 0.0
+    # for (x0, y0), (x1, y1) in zip(ordered, ordered[1:]):
+    #     area += (x1 - x0) * (y1 + y0)
+    # if area > 0:
+    #     ordered = [ordered[0]] + ordered[:0:-1]
+    #
+    # return ordered
+
+def transform(points, chord_len, twist_rad, z_off = None):
+    pts = []
+    cos_t, sin_t = math.cos(twist_rad), math.sin(twist_rad)
+    for x, y in points:
+        px = (x - 1.0) * chord_len
+        py = y * chord_len
+        rx = px * cos_t - py * sin_t
+        ry = px * sin_t + py * cos_t
+        pts.append(adsk.core.Point3D.create(rx, ry, 0.0 if z_off is None else z_off))
+    return pts
+def to_object_collection(points, chord_len, twist_rad):
+    oc = adsk.core.ObjectCollection.create()
+    pts = transform(points, chord_len, twist_rad, z_off = None)
+    for pt in pts:
+        oc.add(pt)
+    return oc
+
+def run(context):
+    ui = None
+    try:
+        app = adsk.core.Application.get()
+        ui  = app.userInterface
+
+        fd = ui.createFileDialog()
+        fd.isMultiSelectEnabled = False
+        fd.title  = "Select blade JSON specification"
+        fd.filter = "JSON (*.json)"
+        if fd.showOpen() != adsk.core.DialogResults.DialogOK:
+            return
+        json_path = Path(fd.filename)
+
+
+
+        ROOT_DIR = Path(__file__).resolve().parent.parent
+        airfoil_dir = ROOT_DIR / "naca_data" / "airfoil_profiles"
+        save_path = ROOT_DIR / "naca_data" / "blade_models" / f"{Path(json_path).stem}.f3d"
+
+
+
+
+
+
+        fol = ui.createFolderDialog()
+        fol.title = "Select folder containing .dat air-foil files"
+        if fol.showDialog() != adsk.core.DialogResults.DialogOK:
+            return
+        airfoil_dir = Path(fol.folder)
+        #
+        # sf = ui.createFileDialog()
+        # sf.title  = "Save blade as Fusion archive"
+        # sf.filter = "Fusion Archive (*.f3d)"
+        # sf.initialFilename = json_path.stem + ".f3d"
+        # if sf.showSave() != adsk.core.DialogResults.DialogOK:
+        #     return
+        # save_path = Path(sf.filename)
+
+        doc    = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
+        design = adsk.fusion.Design.cast(app.activeProduct)
+        root   = design.rootComponent
+        um     = design.unitsManager
+        du     = um.defaultLengthUnits
+        to_du  = lambda m: um.convert(m, "m", du)
+
+        with open(json_path, "r") as fp:
+            spec = json.load(fp)
+
+
+
+        sections = sorted(spec["blades"], key=lambda s: s["radial_pos_m"])
+        n_blades = spec.get("num_blades", 1)
+
+        base_plane = root.xYConstructionPlane
+        profiles   = []
+
+        for sec in sections:
+            z_off  = to_du(sec["radial_pos_m"])
+            chord  = to_du(sec["chord_len_m"])
+            twist  = sec["twist_rad"]
+
+            if sec.get("coordinate_file"):
+                foil = sec["coordinate_file"] + ".dat"
+                foil = airfoil_dir / foil
+                pts2d = reorder_to_te_clockwise(read_dat(foil))
+            else:
+                pts2d = reorder_to_te_clockwise(get_naca_coordinates(sec.get("naca")))
+
+            p_in = root.constructionPlanes.createInput()
+            p_in.setByOffset(base_plane, adsk.core.ValueInput.createByReal(z_off))
+            plane = root.constructionPlanes.add(p_in)
+
+            sk = root.sketches.add(plane)
+            sk.sketchCurves.sketchFittedSplines.add(
+                to_object_collection(pts2d, chord, twist)
+            )
+            profiles.append(sk.profiles.item)
+
+
+
+        lofts  = root.features.loftFeatures
+        lf_in  = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+
+        # for pr in profiles:
+        #     lf_in.loftSections.add(pr)
+        #
+        # # le_path = generate_le_guide(root, to_du)
+        # rail_path = generate_te_guide(root, to_du)
+        #
+        # lofts       = root.features.loftFeatures
+        # blade_body  = None
+        # #
+        # lf_in.centerLineOrRails.addRail(rail_path)
+        # lf_in.centerLineOrRails.addCenterLine(le_path)
+        # loft = lofts.add(lf_in)
+
+
+
+        le_path = generate_le_guide(root, to_du)
+        rail_path = generate_te_guide(root, to_du)
+
+        blade_body = None
+
+        for i in range(1, len(profiles) - 1):
+            lf_in = lofts.createInput(
+                adsk.fusion.FeatureOperations.NewBodyFeatureOperation
+                if blade_body is None
+                else adsk.fusion.FeatureOperations.JoinFeatureOperation)
+
+            lf_in.loftSections.add(profiles[i - 1])
+            lf_in.loftSections.add(profiles[i])
+            lf_in.centerLineOrRails.addCenterLine(le_path)
+            lf_in.centerLineOrRails.addRail(rail_path)
+
+            loft = lofts.add(lf_in)
+
+            if blade_body is None:
+                blade_body = loft.bodies.item(0)
+
+
+        # exp_mgr = design.exportManager
+        # opts    = exp_mgr.createFusionArchiveExportOptions(str(save_path))
+        # exp_mgr.execute(opts)
+
+        ui.messageBox(f"Blade created")
+        # ui.messageBox(f"Blade created and saved to:\n{save_path}")
+
+    except Exception:
+        if ui:
+            ui.messageBox("Blade add-in failed:\n" + traceback.format_exc())
+        raise
+
+
+def stop(context):
+    pass
+
+
 
 
 
@@ -261,192 +512,3 @@ def naca(number, n, finite_te=False, half_cosine_spacing=False):
         return naca5(number, n, finite_te, half_cosine_spacing)
     else:
         raise Exception
-
-def read_dat(path):
-    x = []
-    y = []
-    with open(path, "r") as fp:
-        for line in fp:
-            try:
-                values = line.strip().split()
-                x.append(float(values[0]))
-                y.append(float(values[1]))
-            except ValueError:
-                continue
-        if len(x) > 0 and (x[0] != x[-1] or y[0] != y[-1]):
-            x.append(x[0])
-            y.append(y[0])
-    return (x, y)
-
-
-
-
-def get_naca_coordinates(naca_code):
-    pts = naca(naca_code, 200)
-    return pts
-def reorder_to_te_clockwise(points):
-    if isinstance(points[0], tuple):
-        pts = points
-    else:
-        pts = list(zip(*points))
-
-    max_x = max(p[0] for p in pts)
-    te_candidates = [i for i, p in enumerate(pts) if abs(p[0] - max_x) < 1e-6]
-    start = te_candidates[0]
-
-    ordered = pts[start:] + pts[1:start+1]
-
-    area = 0.0
-    for (x0, y0), (x1, y1) in zip(ordered, ordered[1:]):
-        area += (x1 - x0) * (y1 + y0)
-    if area > 0:
-        ordered = [ordered[0]] + ordered[:0:-1]
-
-    return ordered
-
-
-def transform(points, chord_len, twist_rad, z_off = None):
-    pts = []
-    cos_t, sin_t = math.cos(twist_rad), math.sin(twist_rad)
-    for x, y in points:
-        px = (x - 1.0) * chord_len
-        py = y * chord_len
-        rx = px * cos_t - py * sin_t
-        ry = px * sin_t + py * cos_t
-        pts.append(adsk.core.Point3D.create(rx, ry, 0.0 if z_off is None else z_off))
-    return pts
-def to_object_collection(points, chord_len, twist_rad):
-    oc = adsk.core.ObjectCollection.create()
-    pts = transform(points, chord_len, twist_rad, z_off = None)
-    for pt in pts:
-        oc.add(pt)
-    return oc
-
-def run(context):
-    ui = None
-    try:
-        app = adsk.core.Application.get()
-        ui  = app.userInterface
-
-        fd = ui.createFileDialog()
-        fd.isMultiSelectEnabled = False
-        fd.title  = "Select blade JSON specification"
-        fd.filter = "JSON (*.json)"
-        if fd.showOpen() != adsk.core.DialogResults.DialogOK:
-            return
-        json_path = Path(fd.filename)
-
-
-
-        ROOT_DIR = Path(__file__).resolve().parent.parent
-        airfoil_dir = ROOT_DIR / "naca_data" / "airfoil_profiles"
-        save_path = ROOT_DIR / "naca_data" / "blade_models" / f"{Path(json_path).stem}.f3d"
-
-
-
-
-        #
-        #
-        # fol = ui.createFolderDialog()
-        # fol.title = "Select folder containing .dat air-foil files"
-        # if fol.showDialog() != adsk.core.DialogResults.DialogOK:
-        #     return
-        # airfoil_dir = Path(fol.folder)
-        #
-        # sf = ui.createFileDialog()
-        # sf.title  = "Save blade as Fusion archive"
-        # sf.filter = "Fusion Archive (*.f3d)"
-        # sf.initialFilename = json_path.stem + ".f3d"
-        # if sf.showSave() != adsk.core.DialogResults.DialogOK:
-        #     return
-        # save_path = Path(sf.filename)
-
-        doc    = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
-        design = adsk.fusion.Design.cast(app.activeProduct)
-        root   = design.rootComponent
-        um     = design.unitsManager
-        du     = um.defaultLengthUnits
-        to_du  = lambda m: um.convert(m, "m", du)
-
-        with open(json_path, "r") as fp:
-            spec = json.load(fp)
-
-        sections = sorted(spec["blades"], key=lambda s: s["radial_pos_m"])
-        n_blades = spec.get("num_blades", 1)
-
-        base_plane = root.xYConstructionPlane
-        profiles   = []
-
-        for sec in sections:
-            z_off  = to_du(sec["radial_pos_m"])
-            chord  = to_du(sec["chord_len_m"])
-            twist  = sec["twist_rad"]
-
-            if sec.get("coordinate_file"):
-                foil = airfoil_dir / sec["coordinate_file"].with_suffix(".dat")
-                pts2d = reorder_to_te_clockwise(read_dat(foil))
-            else:
-                pts2d = reorder_to_te_clockwise(get_naca_coordinates(sec.get("naca")))
-
-            p_in = root.constructionPlanes.createInput()
-            p_in.setByOffset(base_plane, adsk.core.ValueInput.createByReal(z_off))
-            plane = root.constructionPlanes.add(p_in)
-
-            sk = root.sketches.add(plane)
-            sk.sketchCurves.sketchFittedSplines.add(
-                to_object_collection(pts2d, chord, twist)
-            )
-            profiles.append(sk.profiles.item(0))
-
-
-
-        lofts  = root.features.loftFeatures
-        lf_in  = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-
-        for pr in profiles:
-            lf_in.loftSections.add(pr)
-
-        le_path = generate_le_guide(root, to_du)
-        rail_path = generate_te_guide(root, to_du)
-
-        lofts       = root.features.loftFeatures
-        blade_body  = None
-
-        lf_in = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation if blade_body is None else adsk.fusion.FeatureOperations.JoinFeatureOperation)
-        for pr in profiles:
-            lf_in.loftSections.add(pr)
-
-        lf_in.centerLineOrRails.addCenterLine(le_path)
-        lf_in.centerLineOrRails.addRail(rail_path)
-
-        # for i in range(1, len(profiles)):
-        #     lf_in = lofts.createInput(
-        #         adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-        #         if blade_body is None
-        #         else adsk.fusion.FeatureOperations.JoinFeatureOperation)
-        #
-        #     lf_in.loftSections.add(profiles[i - 1])
-        #     lf_in.loftSections.add(profiles[i])
-        #     lf_in.centerLineOrRails.addCenterLine(le_path)
-        #     lf_in.centerLineOrRails.addRail(rail_path)
-        #
-        #     loft = lofts.add(lf_in)
-        #
-        #     if blade_body is None:
-        #         blade_body = loft.bodies.item(0)
-
-
-        # exp_mgr = design.exportManager
-        # opts    = exp_mgr.createFusionArchiveExportOptions(str(save_path))
-        # exp_mgr.execute(opts)
-
-        ui.messageBox(f"Blade created and saved to:\n{save_path}")
-
-    except Exception:
-        if ui:
-            ui.messageBox("Blade add-in failed:\n" + traceback.format_exc())
-        raise
-
-
-def stop(context):
-    pass

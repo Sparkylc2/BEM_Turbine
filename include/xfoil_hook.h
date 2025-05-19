@@ -18,7 +18,7 @@ namespace xf {
         int    panels      = 160;
         double te_le_ratio = 0.15;
         // --- flow -------------------------------------------------------------------
-        dimensionless_t re     = 1e7;
+        dimensionless_t re     = 1e6;
         dimensionless_t mach   = 0.0;
         double n_crit = 7.0;
         // --- solver -----------------------------------------------------------------
@@ -131,6 +131,7 @@ namespace xf {
         static void init_airfoil_geometry(std::ofstream& ss, const Config& cfg) {
             if(!cfg.coord_file.empty()) {
                 ss << "LOAD " << cfg.coord_file << "\n";
+                ss << "\n";
             } else {
                 ss << "NACA " << cfg.naca << "\n";
             }
@@ -232,13 +233,23 @@ namespace xf {
 
             std::string cmd;
             if (runtime == "docker") {
-                // Docker execution (for macOS/Linux)
                 const std::string mount_path = std::filesystem::absolute(Helpers::get_project_root()).generic_string();
-                cmd = runtime + " run --rm -i " +
+                std::string container_id = "xfoil_run_" + std::to_string(std::rand());
+
+                cmd = runtime + " run --name " + container_id + " --rm -i " +
                       "-v " + Helpers::sh_quote(mount_path + ":/work:rw") + " " +
                       "-w /work " +
                       image + " xfoil " +
                       "< " + Helpers::sh_quote(scr) + " 2>&1";
+
+
+                // const std::string mount_path = std::filesystem::absolute(Helpers::get_project_root()).generic_string();
+                //
+                // cmd = runtime + " run --rm -i " +
+                //       "-v " + Helpers::sh_quote(mount_path + ":/work:rw") + " " +
+                //       "-w /work " +
+                //       image + " xfoil " +
+                //       "< " + Helpers::sh_quote(scr) + " 2>&1";
             } else if (runtime == "cmd") {
                 std::string script_content = adjust_paths_for_local_execution(scr);
                 if (!script_content.empty()) {
@@ -250,7 +261,6 @@ namespace xf {
                 std::string xfoil_exe_path = Helpers::get_project_root() + "/xfoil/xfoil.exe";
                 std::string xfoil_cmd = xfoil_exe_path.empty() ? "xfoil.exe" : xfoil_exe_path;
                 cmd = xfoil_cmd + " < " + scr + " 2>&1";
-                // cmd = "xfoil.exe < " + Helpers::sh_quote(scr) + " 2>&1";
             } else {
                 std::cerr << "Unsupported runtime: " << runtime << "\n";
                 return false;
@@ -267,7 +277,6 @@ namespace xf {
             }
 
             polar = parse_xfoil_output_to_polar(xfoil_output, cfg.re);
-
             std::filesystem::remove(scr);
 
             return !polar.pts.empty();

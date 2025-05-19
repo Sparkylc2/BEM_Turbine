@@ -6,5 +6,9 @@
     <mapping directory="$PROJECT_DIR$/build/_deps/gsl-lite-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/_deps/nlohmann_json-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/build/_deps/units_src-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/eve-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/gsl-lite-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/nlohmann_json-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/units_src-src" vcs="Git" />
   </component>
 </project>

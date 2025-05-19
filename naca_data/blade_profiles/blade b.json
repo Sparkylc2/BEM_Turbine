@@ -1,7 +1,7 @@
 {
   "blades": [
-    {"naca": "4412", "coordinate_file": "", "radial_pos_m": 0.3, "chord_len_m": 0.30, "twist_rad": 0.523598776},
-    {"naca": "4412", "coordinate_file": "", "radial_pos_m": 1.0, "chord_len_m": 0.6, "twist_rad": 0.3}
+    {"naca": "", "coordinate_file": "SG6043.dat", "radial_pos_m": 0.3, "chord_len_m": 0.30, "twist_rad": 0.523598776},
+    {"naca": "", "coordinate_file": "SG6043.dat", "radial_pos_m": 1.0, "chord_len_m": 0.6, "twist_rad": 0.3}
 
   ],
   "rotor_hub_radius_m": 0.01,
