@@ -32,7 +32,7 @@ void Rotor::initialize_rotor() {
     this -> init_blade_sections(j);
 }
 
-void Rotor::initialize_rotor(double tsr) {
+void Rotor::initialize_rotor(dimensionless_t tsr) {
     this -> runner = xf::XFOILRunner();
     this -> cfg = xf::Config();
 
@@ -43,6 +43,22 @@ void Rotor::initialize_rotor(double tsr) {
     this -> num_blades = dimensionless_t(j["num_blades"].get<int>());
     this -> tsr = dimensionless_t(tsr);
     this -> wind_speed = meters_per_second_t(j["wind_speed_mps"].get<double>());
+    this -> angular_velocity = radians_per_second_t(((this -> tsr * this -> wind_speed) / this -> rotor_radius).value());
+
+    this -> init_blade_sections(j);
+}
+
+void Rotor::initialize_rotor(meters_per_second_t wind_speed) {
+    this -> runner = xf::XFOILRunner();
+    this -> cfg = xf::Config();
+
+    nlohmann::json j = load_rotor_json();
+
+    this -> rotor_radius = meter_t(j["rotor_radius_m"].get<double>());
+    this -> rotor_hub_radius = meter_t(j["rotor_hub_radius_m"].get<double>());
+    this -> num_blades = dimensionless_t(j["num_blades"].get<int>());
+    this -> tsr = dimensionless_t(j["tip_speed_ratio"].get<double>());
+    this -> wind_speed = wind_speed;
     this -> angular_velocity = radians_per_second_t(((this -> tsr * this -> wind_speed) / this -> rotor_radius).value());
 
     this -> init_blade_sections(j);
@@ -80,9 +96,6 @@ void Rotor::init_blade_sections(nlohmann::json& j) {
                node["coordinate_file"].get<std::string>()
 
        );
-
-        std::cout << this->blade_sections.back().g_cfg().coord_file << std::endl;
-
     }
 }
 
@@ -172,5 +185,20 @@ void Rotor::save_rotor_json(const std::string& name) const {
     } catch (const std::exception& e) {
         std::cerr << "Error writing rotor JSON: " << e.what() << "\n";
     }
+}
+
+
+double Rotor::simulate_rotor(Rotor& rotor, double dt) {
+    double rotational_inertia = 5;
+    rotor.run_bem();
+    double torque = rotor.g_torque().value();
+    double angular_acceleration = torque / rotational_inertia;
+    double angular_velocity = rotor.g_angular_velocity().value() + angular_acceleration * dt;
+
+    // a = tsr * wind_speed / rotor_radius;
+    // a * rotor_radius / wind_speed = tsr;
+
+    return angular_velocity * rotor.g_rotor_radius().value() / rotor.g_wind_speed().value();
+
 }
 

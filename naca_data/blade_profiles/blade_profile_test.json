@@ -1,9 +1,6 @@
 {
     "blades": [
         {
-
-        },
-        {
             "radial_pos_m": 0.0,
             "chord_len_m": 0.0,
             "twist_rad": 0.18553310600340756,
@@ -11,16 +8,142 @@
             "coordinate_file": "SG6043.dat"
         },
         {
-            "radial_pos_m": 2.9,
+            "radial_pos_m": 0.0499985,
+            "chord_len_m": 0.008021461035174812,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.099997,
+            "chord_len_m": 0.016042922070349623,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.1499955,
+            "chord_len_m": 0.024064383105524435,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.20000349999999997,
+            "chord_len_m": 0.03208736826401963,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.250002,
+            "chord_len_m": 0.04010882929919444,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.3000005,
+            "chord_len_m": 0.048130290334369254,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.349999,
+            "chord_len_m": 0.05615175136954406,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.39999749999999995,
+            "chord_len_m": 0.06417321240471886,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.44999599999999995,
+            "chord_len_m": 0.07219467343989368,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.500004,
+            "chord_len_m": 0.08021765859838888,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.5500025,
+            "chord_len_m": 0.08823911963356369,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.600001,
+            "chord_len_m": 0.09626058066873851,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.6499995,
+            "chord_len_m": 0.10428204170391332,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.699998,
+            "chord_len_m": 0.11230350273908812,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.7499965,
+            "chord_len_m": 0.12032496377426295,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.8000045,
+            "chord_len_m": 0.12834794893275814,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.850003,
+            "chord_len_m": 0.13636940996793293,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.9000015,
+            "chord_len_m": 0.14439087100310777,
+            "twist_rad": 0.18553310600340756,
+            "naca": "",
+            "coordinate_file": "SG6043.dat"
+        },
+        {
+            "radial_pos_m": 0.95,
             "chord_len_m": 0.15241233203828256,
             "twist_rad": 0.18553310600340756,
             "naca": "",
             "coordinate_file": "SG6043.dat"
         }
     ],
-    "rotor_hub_radius_m": 0.1,
-    "rotor_radius_m": 3.0,
-    "num_blades": 2,
+    "rotor_hub_radius_m": 0.05,
+    "rotor_radius_m": 1.0,
+    "num_blades": 10,
     "tip_speed_ratio": 3.5,
     "wind_speed_mps": 10.0
 }

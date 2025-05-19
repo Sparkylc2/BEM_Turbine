@@ -57,7 +57,7 @@ void BladeSection::update_cl_cd() {
             XFOILRunner::configure_airfoil(ss, cfg);
             XFOILRunner::configure_solver(ss, cfg);
             XFOILRunner::set_alpha_sweep(ss, cfg);
-            // XFOILRunner::save_airfoil(ss, cfg);
+            XFOILRunner::save_airfoil(ss, cfg);
             XFOILRunner::quit(ss);
         };
 
@@ -65,14 +65,13 @@ void BladeSection::update_cl_cd() {
             if (!runner.run(cfg, basePolar, routine) || basePolar.pts.empty()) {
                 if (naca_code.empty()) {
                     // std::cerr << "[XFOIL] failed for airfoil file: " << coordinate_file << "\n";
-                } else {
+                // } else {
                     // std::cerr << "[XFOIL] failed for airfoil: " << naca_code << "\n";
                 }
             }
         } catch (const std::exception& e) {
             std::cerr << "XFOIL exception: " << e.what() << std::endl;
         }
-
 
         basePolars.emplace(naca_code, basePolar);
     } else {

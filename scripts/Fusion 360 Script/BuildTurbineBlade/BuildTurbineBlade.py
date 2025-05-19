@@ -4,8 +4,8 @@ import adsk.core, adsk.fusion
 
 
 
-HUB_RADIUS = 0.1
-TIP_RADIUS = 3.0
+HUB_RADIUS = 0.05
+TIP_RADIUS = 1.0
 CHORD_DISTRIBUTION = lambda r:  8 * math.pi * r / (2 * 1.415) * (1 - math.cos(TWIST_DISTRIBUTION(r)))
 TWIST_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / 3.5)
 
@@ -105,8 +105,8 @@ def read_dat(path):
 
 def get_naca_coordinates(naca_code):
     x, y = naca(naca_code, 200)
-    x.append(x[0])
-    y.append(y[0])
+    # x.append(x[0])
+    # y.append(y[0])
 
     return (x, y)
 def reorder_to_te_clockwise(points):
@@ -210,7 +210,7 @@ def run(context):
             twist  = sec["twist_rad"]
 
             if sec.get("coordinate_file"):
-                foil = sec["coordinate_file"] + ".dat"
+                foil = sec["coordinate_file"]
                 foil = airfoil_dir / foil
                 pts2d = reorder_to_te_clockwise(read_dat(foil))
             else:
@@ -228,8 +228,8 @@ def run(context):
 
 
 
-        lofts  = root.features.loftFeatures
-        lf_in  = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+        # lofts  = root.features.loftFeatures
+        # lf_in  = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
 
         # for pr in profiles:
         #     lf_in.loftSections.add(pr)
@@ -249,9 +249,10 @@ def run(context):
         le_path = generate_le_guide(root, to_du)
         rail_path = generate_te_guide(root, to_du)
 
-        blade_body = None
+        lofts       = root.features.loftFeatures
+        blade_body  = None
 
-        for i in range(1, len(profiles) - 1):
+        for i in range(1, len(profiles)):
             lf_in = lofts.createInput(
                 adsk.fusion.FeatureOperations.NewBodyFeatureOperation
                 if blade_body is None
@@ -259,8 +260,7 @@ def run(context):
 
             lf_in.loftSections.add(profiles[i - 1])
             lf_in.loftSections.add(profiles[i])
-            lf_in.centerLineOrRails.addCenterLine(le_path)
-            lf_in.centerLineOrRails.addRail(rail_path)
+            # lf_in.centerLineOrRails.addCenterLine(rail_path)
 
             loft = lofts.add(lf_in)
 

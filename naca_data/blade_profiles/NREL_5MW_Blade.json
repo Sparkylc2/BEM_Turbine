@@ -1,0 +1,28 @@
+{
+  "blades": [
+    {"naca": "", "coordinate_file": "Cylinder1_coords.dat", "radial_pos_m": 1.500000, "chord_len_m": 3.54200, "twist_rad": 0.232 },
+    {"naca": "", "coordinate_file": "Cylinder1_coords.dat", "radial_pos_m": 2.866700, "chord_len_m": 3.54200, "twist_rad": 0.232 },
+    {"naca": "", "coordinate_file": "Cylinder1_coords.dat", "radial_pos_m": 5.600000, "chord_len_m": 3.85400, "twist_rad": 0.232 },
+    {"naca": "", "coordinate_file": "Cylinder2_coords.dat", "radial_pos_m": 8.333300, "chord_len_m": 4.16700, "twist_rad": 0.232 },
+    {"naca": "", "coordinate_file": "DU40_A17_coords.dat", "radial_pos_m": 11.75000, "chord_len_m": 4.55700, "twist_rad": 0.232 },
+    {"naca": "", "coordinate_file": "DU35_A17_coords.dat", "radial_pos_m": 15.85000, "chord_len_m": 4.65200, "twist_rad": 0.200 },
+    {"naca": "", "coordinate_file": "DU35_A17_coords.dat", "radial_pos_m": 19.95000, "chord_len_m": 4.45800, "twist_rad": 0.177 },
+    {"naca": "", "coordinate_file": "DU30_A17_coords.dat", "radial_pos_m": 24.05000, "chord_len_m": 4.24900, "twist_rad": 0.157 },
+    {"naca": "", "coordinate_file": "DU25_A17_coords.dat", "radial_pos_m": 28.15000, "chord_len_m": 4.00700, "twist_rad": 0.136 },
+    {"naca": "", "coordinate_file": "DU25_A17_coords.dat", "radial_pos_m": 32.25000, "chord_len_m": 3.74800, "twist_rad": 0.114 },
+    {"naca": "", "coordinate_file": "DU21_A17_coords.dat", "radial_pos_m": 36.35000, "chord_len_m": 3.50200, "twist_rad": 0.094 },
+    {"naca": "", "coordinate_file": "DU21_A17_coords.dat", "radial_pos_m": 40.45000, "chord_len_m": 3.25600, "twist_rad": 0.073 },
+    {"naca": "", "coordinate_file": "NACA64_A17_coords.dat", "radial_pos_m": 44.55000, "chord_len_m": 3.01000, "twist_rad": 0.055 },
+    {"naca": "", "coordinate_file": "NACA64_A17_coords.dat", "radial_pos_m": 48.65000, "chord_len_m": 2.76400, "twist_rad": 0.040 },
+    {"naca": "", "coordinate_file": "NACA64_A17_coords.dat", "radial_pos_m": 52.75000, "chord_len_m": 2.51800, "twist_rad": 0.027 },
+    {"naca": "", "coordinate_file": "NACA64_A17_coords.dat", "radial_pos_m": 56.16670, "chord_len_m": 2.31300, "twist_rad": 0.015 },
+    {"naca": "", "coordinate_file": "NACA64_A17_coords.dat", "radial_pos_m": 58.90000, "chord_len_m": 2.08600, "twist_rad": 0.006 },
+    {"naca": "", "coordinate_file": "NACA64_A17_coords.dat", "radial_pos_m": 61.63330, "chord_len_m": 1.41900, "twist_rad": 0.002 },
+    {"naca": "", "coordinate_file": "NACA64_A17_coords.dat", "radial_pos_m": 63.00000, "chord_len_m": 0.96100, "twist_rad": 0.000 }
+  ],
+  "rotor_hub_radius_m": 1.5,
+  "rotor_radius_m": 63.0,
+  "num_blades": 2,
+  "tip_speed_ratio": 3.5,
+  "wind_speed_mps": 10.0
+}

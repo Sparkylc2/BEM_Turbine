@@ -13,11 +13,11 @@ TSR = 3.5
 # ---------------------------------------------------- #
 # -------------------- HUB RADIUS -------------------- #
 # ---------------------------------------------------- #
-HUB_RADIUS = 0.0 # metres
+HUB_RADIUS = 0.05 # metres
 # ---------------------------------------------------- #
 # -------------------- TIP RADIUS -------------------- #
 # ---------------------------------------------------- #
-TIP_RADIUS = 3.0 # metres
+TIP_RADIUS = 1.0 # metres
 # ---------------------------------------------------- #
 # ------------------ FREE STREAM VEL ----------------- #
 # ---------------------------------------------------- #
@@ -25,7 +25,7 @@ WIND_SPEED = 10.0 # metres per second
 # ---------------------------------------------------- #
 # -------------------- NUM BLADES -------------------- #
 # ---------------------------------------------------- #
-NUM_BLADES = 2
+NUM_BLADES = 10
 # ---------------------------------------------------- #
 # ---------------------------------------------------- #
 # ---------------------------------------------------- #
@@ -40,7 +40,7 @@ NUM_BLADES = 2
 # ---------------------------------------------------- #
 # ---------------- PROFILE RESOLUTION ---------------- #
 # ---------------------------------------------------- #
-PROFILE_RESOLUTION = 2
+PROFILE_RESOLUTION = 20
 # ---------------------------------------------------- #
 # ------------- CHORD/TWIST DISTRIBUTION ------------- #
 # ---------------------------------------------------- #
@@ -54,8 +54,8 @@ TWIST_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / 3.5)
 # ---------------------------------------------------- #  filled in based on resolution. Non dimensionalize radial
 INITIAL_PROFILES = []                                  #  position here (easy scaling) (also 0 means hub, 1 means tip)
 
-INITIAL_PROFILES.append({"coordinate_file": "SG6043", "radial_pos": 0.2})
-INITIAL_PROFILES.append({"coordinate_file": "SG6043", "radial_pos": 1.0})
+INITIAL_PROFILES.append({"coordinate_file": "SG6043.dat", "radial_pos": 0.2})
+INITIAL_PROFILES.append({"coordinate_file": "SG6043.dat", "radial_pos": 1.0})
 # ---------------------------------------------------- #
 # --------------- EXTRA CONFIG PARAMS ---------------- #
 # ---------------------------------------------------- #
@@ -84,7 +84,7 @@ blades = list(map(lambda profile: Blade(
     chord_len_m     = CHORD_DISTRIBUTION(profile["radial_pos"]),
     twist_rad       = TWIST_DISTRIBUTION(profile["radial_pos"]),
     naca            =                    profile["naca"]            if "naca"            in profile else "",
-    coordinate_file =                    (profile["coordinate_file"] if "coordinate_file" in profile else "").strip() + (".dat" if not profile["coordinate_file"].endswith(".dat") else "")
+    coordinate_file =                    profile["coordinate_file"] if "coordinate_file" in profile else ""
 ), profiles))
 
 # ---------------------------------------------------- #

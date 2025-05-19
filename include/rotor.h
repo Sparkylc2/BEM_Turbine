@@ -59,9 +59,12 @@ public:
 
     explicit Rotor(std::string name) : rotor_name{std::move(name)} {}
     void initialize_rotor();
-    void initialize_rotor(double tsr);
+    void initialize_rotor(dimensionless_t tsr);
+    void initialize_rotor(meters_per_second_t wind_speed);
     void save_rotor_json(const std::string& filename) const;
     void run_bem();
+
+    static double simulate_rotor(Rotor& rotor, double dt);
 
 
 

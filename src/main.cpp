@@ -4,10 +4,43 @@
 using namespace matplot;
 // Example usage
 int main() {
-    // xf::demo();
+    //
+    // std::vector<double> time = Helpers::linspace(0, 3.0, 200);
+    // std::vector<double> torque_vec;
+    // std::vector<double> tsr_vec;
+    //
+    // double prev_tsr = 3.0;
+    // double dt = time[1] - time[0];
+    // for (int i = 0; i < time.size(); i++) {
+    //     Rotor rotor = Rotor("blade_profile_test");
+    //     rotor.initialize_rotor(dimensionless_t(prev_tsr));
+    //
+    //     double tsr = Rotor::simulate_rotor(rotor, dt);
+    //
+    //     std::cout << "Torque " << rotor.g_torque().value() << std::endl;
+    //     torque_vec.push_back(rotor.g_torque().value());
+    //     tsr_vec.push_back(tsr);
+    //     std::cout << "TSR: " << tsr << std::endl;
+    //     prev_tsr = tsr;
+    // }
+    //
+    //
+    // figure();
+    // hold(on);
+    // plot(time, tsr_vec) -> color("green");
+    // plot(time, torque_vec) -> color("red");
+    // xlabel("Time");
+    // ylabel("TSR / Torque (Nm)");
+    // title("TSR/Torque vs Time");
+    // legend("TSR", "Torque");
+    // grid(on);
+    // show();
+
+
+
 
     double tsr_min = 1.0;
-    double tsr_max = 6.0;
+    double tsr_max = 12.0;
 
     std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 200);
 
