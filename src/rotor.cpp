@@ -126,7 +126,7 @@ void Rotor::run_bem() {
 
 
     for (auto &sec : blade_sections) {
-        BEMSolver::run_bem_backup(sec);
+        BEMSolver::run_bem_solver(sec);
         sec.post_bem_routine();
 
         if (!std::isnan(sec.g_differential_drag().value())) this -> drag += sec.g_differential_drag();

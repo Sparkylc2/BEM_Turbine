@@ -45,8 +45,11 @@ void BladeSection::update_cl_cd() {
     static std::unordered_map<std::string, xf::Polar> basePolars;
 
     xf::Polar basePolar;
-    auto it = basePolars.find(naca_code);
+    std::string polarName = naca_code.empty() ? coordinate_file : naca_code;
+    auto it = basePolars.find(polarName);
+
     if (it == basePolars.end()) {
+        std::cout << "Calculating polar for: " << polarName << std::endl;
         // not optimal but im too lazy to change it now
         xf::XFOILRunner &runner = parent_rotor.runner;
 
@@ -57,7 +60,7 @@ void BladeSection::update_cl_cd() {
             XFOILRunner::configure_airfoil(ss, cfg);
             XFOILRunner::configure_solver(ss, cfg);
             XFOILRunner::set_alpha_sweep(ss, cfg);
-            XFOILRunner::save_airfoil(ss, cfg);
+            // XFOILRunner::save_airfoil(ss, cfg);
             XFOILRunner::quit(ss);
         };
 
@@ -73,7 +76,7 @@ void BladeSection::update_cl_cd() {
             std::cerr << "XFOIL exception: " << e.what() << std::endl;
         }
 
-        basePolars.emplace(naca_code, basePolar);
+        basePolars.emplace(polarName, basePolar);
     } else {
         basePolar = it -> second;
     }

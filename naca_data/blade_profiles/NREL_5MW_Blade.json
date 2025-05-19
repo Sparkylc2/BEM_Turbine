@@ -1,9 +1,5 @@
 {
   "blades": [
-    {"naca": "", "coordinate_file": "Cylinder1_coords.dat", "radial_pos_m": 1.500000, "chord_len_m": 3.54200, "twist_rad": 0.232 },
-    {"naca": "", "coordinate_file": "Cylinder1_coords.dat", "radial_pos_m": 2.866700, "chord_len_m": 3.54200, "twist_rad": 0.232 },
-    {"naca": "", "coordinate_file": "Cylinder1_coords.dat", "radial_pos_m": 5.600000, "chord_len_m": 3.85400, "twist_rad": 0.232 },
-    {"naca": "", "coordinate_file": "Cylinder2_coords.dat", "radial_pos_m": 8.333300, "chord_len_m": 4.16700, "twist_rad": 0.232 },
     {"naca": "", "coordinate_file": "DU40_A17_coords.dat", "radial_pos_m": 11.75000, "chord_len_m": 4.55700, "twist_rad": 0.232 },
     {"naca": "", "coordinate_file": "DU35_A17_coords.dat", "radial_pos_m": 15.85000, "chord_len_m": 4.65200, "twist_rad": 0.200 },
     {"naca": "", "coordinate_file": "DU35_A17_coords.dat", "radial_pos_m": 19.95000, "chord_len_m": 4.45800, "twist_rad": 0.177 },
@@ -22,7 +18,7 @@
   ],
   "rotor_hub_radius_m": 1.5,
   "rotor_radius_m": 63.0,
-  "num_blades": 2,
+  "num_blades": 3,
   "tip_speed_ratio": 3.5,
   "wind_speed_mps": 10.0
 }

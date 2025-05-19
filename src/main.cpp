@@ -39,8 +39,8 @@ int main() {
 
 
 
-    double tsr_min = 1.0;
-    double tsr_max = 12.0;
+    double tsr_min = 0.0;
+    double tsr_max = 12;
 
     std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 200);
 
@@ -51,7 +51,7 @@ int main() {
 
     for (auto tsr: tsr_vec) {
         std::cout << "TSR: " << tsr << std::endl;
-        Rotor rotor("blade_profile_test");
+        Rotor rotor("SG6043_optimal_distribution");
         rotor.initialize_rotor(tsr);
 
         rotor.run_bem();

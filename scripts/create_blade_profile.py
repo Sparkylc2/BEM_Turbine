@@ -1,5 +1,6 @@
 import math
 
+import numpy as np
 from create_blade_functions import *
 
 
@@ -13,11 +14,11 @@ TSR = 3.5
 # ---------------------------------------------------- #
 # -------------------- HUB RADIUS -------------------- #
 # ---------------------------------------------------- #
-HUB_RADIUS = 0.05 # metres
+HUB_RADIUS = 0.02 # metres
 # ---------------------------------------------------- #
 # -------------------- TIP RADIUS -------------------- #
 # ---------------------------------------------------- #
-TIP_RADIUS = 1.0 # metres
+TIP_RADIUS = 0.227 # metres
 # ---------------------------------------------------- #
 # ------------------ FREE STREAM VEL ----------------- #
 # ---------------------------------------------------- #
@@ -25,7 +26,7 @@ WIND_SPEED = 10.0 # metres per second
 # ---------------------------------------------------- #
 # -------------------- NUM BLADES -------------------- #
 # ---------------------------------------------------- #
-NUM_BLADES = 10
+NUM_BLADES = 2
 # ---------------------------------------------------- #
 # ---------------------------------------------------- #
 # ---------------------------------------------------- #
@@ -44,8 +45,8 @@ PROFILE_RESOLUTION = 20
 # ---------------------------------------------------- #
 # ------------- CHORD/TWIST DISTRIBUTION ------------- #
 # ---------------------------------------------------- #
-CHORD_DISTRIBUTION = lambda r:  8 * math.pi * r / (2 * 1.415) * (1 - math.cos(TWIST_DISTRIBUTION(r)))
-TWIST_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / 3.5)
+CHORD_DISTRIBUTION = lambda r:  0.2 * 8 * math.pi * r / (2 * 1.02) * (1 - math.cos(TWIST_DISTRIBUTION(r) + math.radians(2.3)))
+TWIST_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(TIP_RADIUS / (TSR * r)) - math.radians(2.3)
 # ---------------------------------------------------- #
 # ---------------- TWIST DISTRIBUTION ---------------- #
 # ---------------------------------------------------- #
@@ -54,7 +55,7 @@ TWIST_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / 3.5)
 # ---------------------------------------------------- #  filled in based on resolution. Non dimensionalize radial
 INITIAL_PROFILES = []                                  #  position here (easy scaling) (also 0 means hub, 1 means tip)
 
-INITIAL_PROFILES.append({"coordinate_file": "SG6043.dat", "radial_pos": 0.2})
+INITIAL_PROFILES.append({"coordinate_file": "SG6043.dat", "radial_pos": 0.0})
 INITIAL_PROFILES.append({"coordinate_file": "SG6043.dat", "radial_pos": 1.0})
 # ---------------------------------------------------- #
 # --------------- EXTRA CONFIG PARAMS ---------------- #
@@ -78,14 +79,15 @@ radial_position_uses_nondimensional_radius = True
 # --------------- CREATE BLADES ARRAY  --------------- #
 # ---------------------------------------------------- #
 profiles = np.array(generate_even_profiles(INITIAL_PROFILES, PROFILE_RESOLUTION))
-
 blades = list(map(lambda profile: Blade(
-    radial_pos_m    =                    profile["radial_pos"]      if not radial_position_uses_nondimensional_radius else profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS),
-    chord_len_m     = CHORD_DISTRIBUTION(profile["radial_pos"]),
-    twist_rad       = TWIST_DISTRIBUTION(profile["radial_pos"]),
+    radial_pos_m    =                    profile["radial_pos"]      if not radial_position_uses_nondimensional_radius else (profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS),
+    chord_len_m     = CHORD_DISTRIBUTION((profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS)),
+    twist_rad       = TWIST_DISTRIBUTION((profile["radial_pos"] * (TIP_RADIUS - HUB_RADIUS) + HUB_RADIUS)),
     naca            =                    profile["naca"]            if "naca"            in profile else "",
     coordinate_file =                    profile["coordinate_file"] if "coordinate_file" in profile else ""
 ), profiles))
+
+
 
 # ---------------------------------------------------- #
 # ------------- CREATE BLADE PROFILE OBJ ------------- #

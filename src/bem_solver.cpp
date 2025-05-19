@@ -42,7 +42,7 @@ namespace BEMSolver {
 
 
         /* ------------ enter iteration loop ------------ */
-        constexpr size_t max_iter = 5000;
+        constexpr size_t max_iter = 10000;
         for (size_t i = 0; i < max_iter; ++i) {
 
 
