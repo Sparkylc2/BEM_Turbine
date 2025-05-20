@@ -16,34 +16,26 @@ TWIST_DISTRIBUTION = lambda r: PHI_DISTRIBUTION(r) - A_DES
 
 
 def generate_le_guide(root, to_du, sections):
-    """Create a leading edge guide using only the section points"""
-    # Create points for each section with EXACT leading edge coordinates
     section_points = []
     for sec in sections:
         z_off = to_du(sec["radial_pos_m"])
         chord = to_du(sec["chord_len_m"])
         twist = sec["twist_rad"]
 
-        # Use exact leading edge point (0,0) in airfoil coordinates
         le_pt = transform([(0.0, 0.0)], chord, twist, z_off=z_off)[0]
         section_points.append(le_pt)
 
-    # Create sketch for the guide curve
     sketch_plane = root.xYConstructionPlane
     sk = root.sketches.add(sketch_plane)
 
-    # Add points to collection
     obj_coll = adsk.core.ObjectCollection.create()
     for pt in section_points:
         obj_coll.add(pt)
 
-    # Create a spline through these points
     spline = sk.sketchCurves.sketchFittedSplines.add(obj_coll)
-    spline.isConstruction = True  # Make it construction geometry so it won't be consumed
+    spline.isConstruction = True
 
-    # Return the path
-    path = root.features.createPath(spline)
-    return path
+    return root.features.createPath(spline)
 
 def generate_te_guide(root, to_du):
     rail_sk   = root.sketches.add(root.yZConstructionPlane)
@@ -218,13 +210,6 @@ def run(context):
             le_3d = transform([le_2d], chord, twist, z_off=z_off)[0]
             le_points.append(le_3d)
 
-            te_idx = max(range(len(pts2d)), key=lambda i: pts2d[i][0])
-            te_2d = pts2d[te_idx]
-
-            te_3d = transform([te_2d], chord, twist, z_off=z_off)[0]
-            te_points.append(te_3d)
-
-
             p_in = root.constructionPlanes.createInput()
             p_in.setByOffset(base_plane, adsk.core.ValueInput.createByReal(z_off))
             plane = root.constructionPlanes.add(p_in)
@@ -240,26 +225,22 @@ def run(context):
                 rail = generate_rail_guide(le_points[i], le_points[i+1], root)
                 le_rails.append(rail)
 
-            te_rails = []
-            for i in range(len(te_points) - 1):
-                rail = generate_rail_guide(te_points[i], te_points[i+1], root)
-                te_rails.append(rail)
+            te_path = generate_te_guide(root, to_du)
 
             lofts = root.features.loftFeatures
-            # te_path = generate_te_guide(root, to_du)
             blade_body = None
 
-            for i in range(len(le_rails) - 1, 0, -1):
+            for i in range(1, len(profiles), -1):
                 if i % 2 == 0:
                     lf_in = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
                 else:
                     lf_in = lofts.createInput(adsk.fusion.FeatureOperations.JoinFeatureOperation)
 
 
-                lf_in.centerLineOrRails.addRail(le_rails[i])  # Leading edge rail for this section pair
-                lf_in.centerLineOrRails.addRail(te_rails[i])     # Trailing edge rail
+                lf_in.centerLineOrRails.addRail(le_rails[i - 1])
+                lf_in.centerLineOrRails.addRail(te_path)
 
-                lf_in.loftSections.add(profiles[i+1])
+                lf_in.loftSections.add(profiles[i-1])
                 lf_in.loftSections.add(profiles[i])
 
                 lf_in.isSolid = True
