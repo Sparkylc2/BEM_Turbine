@@ -36,6 +36,7 @@ class BladeProfile:
     num_blades: int
     tip_speed_ratio: float
     wind_speed_mps: float
+    shift: tuple[float]
 
 
 class BladeEncoder(JSONEncoder):

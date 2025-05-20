@@ -52,6 +52,7 @@ TWIST_DISTRIBUTION = lambda r: PHI_DISTRIBUTION(r) - A_DES
 # ---------------------------------------------------- #
 A_DES = math.radians(2.25)
 CL_DES = 1.012
+SHIFT = (1 - 0.321, -0.05, 0.0)
 # ---------------------------------------------------- #
 # --------------- PROFILE DISTRIBUTION --------------- #  this will consist of the key profiles, the rest will be
 # ---------------------------------------------------- #  filled in based on resolution. Non dimensionalize radial
@@ -99,7 +100,8 @@ blade_profile = BladeProfile(
     rotor_radius_m = TIP_RADIUS,
     num_blades = NUM_BLADES,
     tip_speed_ratio = TSR,
-    wind_speed_mps = WIND_SPEED
+    wind_speed_mps = WIND_SPEED,
+    shift = SHIFT
 )
 
 # ---------------------------------------------------- #

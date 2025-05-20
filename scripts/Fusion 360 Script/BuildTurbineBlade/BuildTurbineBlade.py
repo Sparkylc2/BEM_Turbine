@@ -89,12 +89,11 @@ def read_dat(path):
 
 def get_naca_coordinates(naca_code):
     x, y = naca(naca_code, 200)
-    # x.append(x[0])
-    # y.append(y[0])
+    x.append(x[0])
+    y.append(y[0])
 
     return (x, y)
 def reorder_to_te_clockwise(points):
-    # return list(zip(*points))
     if isinstance(points[0], tuple):
         pts = points
     else:
@@ -114,19 +113,24 @@ def reorder_to_te_clockwise(points):
 
     return ordered
 
-def transform(points, chord_len, twist_rad, z_off = None):
+def transform(points, chord_len, twist_rad, shift, z_off = None):
     pts = []
     cos_t, sin_t = math.cos(twist_rad), math.sin(twist_rad)
+    shift_x, shift_y, shift_z = shift
     for x, y in points:
-        px = (x - 1.0) * chord_len
-        py = y * chord_len
+        ox = x + shift_x
+        oy = y + shift_y
+
+        px = (ox - 1.0) * chord_len
+        py = oy * chord_len
         rx = px * cos_t - py * sin_t
         ry = px * sin_t + py * cos_t
-        pts.append(adsk.core.Point3D.create(rx, ry, 0.0 if z_off is None else z_off))
+        pts.append(adsk.core.Point3D.create(rx, ry, 0.0 if z_off is None else z_off + shift_z))
     return pts
-def to_object_collection(points, chord_len, twist_rad):
+
+def to_object_collection(points, chord_len, twist_rad, shift):
     oc = adsk.core.ObjectCollection.create()
-    pts = transform(points, chord_len, twist_rad, z_off = None)
+    pts = transform(points, chord_len, twist_rad, shift, z_off = None)
     for pt in pts:
         oc.add(pt)
     return oc
@@ -137,32 +141,32 @@ def run(context):
         app = adsk.core.Application.get()
         ui  = app.userInterface
 
-        # fd = ui.createFileDialog()
-        # fd.isMultiSelectEnabled = False
-        # fd.title  = "Select blade JSON specification"
-        # fd.filter = "JSON (*.json)"
-        # if fd.showOpen() != adsk.core.DialogResults.DialogOK:
-        #     return
-        # json_path = Path(fd.filename)
+        fd = ui.createFileDialog()
+        fd.isMultiSelectEnabled = False
+        fd.title  = "Select blade JSON specification"
+        fd.filter = "JSON (*.json)"
+        if fd.showOpen() != adsk.core.DialogResults.DialogOK:
+            return
+        json_path = Path(fd.filename)
 
 
 
-        ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
-        json_path = ROOT_DIR / "naca_data" / "blade_profiles" / "blade_profile_test.json"
-        airfoil_dir = ROOT_DIR / "naca_data" / "airfoil_profiles"
-        save_path = ROOT_DIR / "naca_data" / "blade_models" / f"{Path(json_path).stem}.f3d"
+        # ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
+        # json_path = ROOT_DIR / "naca_data" / "blade_profiles" / "blade_profile_test.json"
+        # airfoil_dir = ROOT_DIR / "naca_data" / "airfoil_profiles"
+        # save_path = ROOT_DIR / "naca_data" / "blade_models" / f"{Path(json_path).stem}.f3d"
 
 
 
 
 
 
-        # fol = ui.createFolderDialog()
-        # fol.title = "Select folder containing .dat air-foil files"
-        # if fol.showDialog() != adsk.core.DialogResults.DialogOK:
-        #     return
-        # airfoil_dir = Path(fol.folder)
-        #
+        fol = ui.createFolderDialog()
+        fol.title = "Select folder containing .dat air-foil files"
+        if fol.showDialog() != adsk.core.DialogResults.DialogOK:
+            return
+        airfoil_dir = Path(fol.folder)
+
         # sf = ui.createFileDialog()
         # sf.title  = "Save blade as Fusion archive"
         # sf.filter = "Fusion Archive (*.f3d)"
@@ -178,17 +182,19 @@ def run(context):
         du     = um.defaultLengthUnits
         to_du  = lambda m: um.convert(m, "m", du)
 
+
+
         with open(json_path, "r") as fp:
             spec = json.load(fp)
 
 
 
         sections = sorted(spec["blades"], key=lambda s: s["radial_pos_m"])
-        n_blades = spec.get("num_blades", 1)
+        shift = tuple(spec["shift"])
 
         base_plane = root.xYConstructionPlane
         profiles = []
-    # In your section loop, store the leading edge points
+
         le_points = []
         te_points = []
 
@@ -207,8 +213,14 @@ def run(context):
             le_idx = min(range(len(pts2d)), key=lambda i: pts2d[i][0])
             le_2d = pts2d[le_idx]
 
-            le_3d = transform([le_2d], chord, twist, z_off=z_off)[0]
+            le_3d = transform([le_2d], chord, twist, shift, z_off = z_off)[0]
             le_points.append(le_3d)
+
+            te_idx = max(range(len(pts2d)), key=lambda i: pts2d[i][0])
+            te_2d = pts2d[te_idx]
+
+            te_3d = transform([te_2d], chord, twist, shift, z_off = z_off)[0]
+            te_points.append(te_3d)
 
             p_in = root.constructionPlanes.createInput()
             p_in.setByOffset(base_plane, adsk.core.ValueInput.createByReal(z_off))
@@ -216,7 +228,7 @@ def run(context):
 
             sk = root.sketches.add(plane)
             sk.sketchCurves.sketchFittedSplines.add(
-                to_object_collection(pts2d, chord, twist)
+                to_object_collection(pts2d, chord, twist, shift)
             )
             profiles.append(sk.profiles.item(0))
 
@@ -224,8 +236,12 @@ def run(context):
             for i in range(len(le_points) - 1):
                 rail = generate_rail_guide(le_points[i], le_points[i+1], root)
                 le_rails.append(rail)
+            te_rails = []
+            for i in range(len(te_points) - 1):
+                rail = generate_rail_guide(te_points[i], te_points[i+1], root)
+                te_rails.append(rail)
 
-            te_path = generate_te_guide(root, to_du)
+            # te_path = generate_te_guide(root, to_du)
 
             lofts = root.features.loftFeatures
             blade_body = None
@@ -238,17 +254,17 @@ def run(context):
 
 
                 lf_in.centerLineOrRails.addRail(le_rails[i - 1])
-                lf_in.centerLineOrRails.addRail(te_path)
+                lf_in.centerLineOrRails.addRail(te_rails[i - 1])
 
-                lf_in.loftSections.add(profiles[i-1])
-                lf_in.loftSections.add(profiles[i])
+                # lf_in.loftSections.add(profiles[i-1])
+                # lf_in.loftSections.add(profiles[i])
+                #
+                # lf_in.isSolid = True
+                #
+                # loft = lofts.add(lf_in)
 
-                lf_in.isSolid = True
-
-                loft = lofts.add(lf_in)
-
-                if blade_body is None:
-                    blade_body = loft.bodies.item(0)
+                # if blade_body is None:
+                #     blade_body = loft.bodies.item(0)
 
         #
         #
