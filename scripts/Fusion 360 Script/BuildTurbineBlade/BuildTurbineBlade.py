@@ -48,7 +48,7 @@ def generate_le_guide(root, to_du, sections):
 def generate_te_guide(root, to_du):
     rail_sk   = root.sketches.add(root.yZConstructionPlane)
     z_min = 0.0
-    z_max = to_du(TIP_RADIUS)
+    z_max = to_du(TIP_RADIUS - HUB_RADIUS)
     # z_min = to_du(sections[0]["radial_pos_m"])
     # z_max = to_du(sections[-1]["radial_pos_m"])
     p0 = rail_sk.modelToSketchSpace(adsk.core.Point3D.create(0, 0, z_min))
@@ -145,17 +145,18 @@ def run(context):
         app = adsk.core.Application.get()
         ui  = app.userInterface
 
-        fd = ui.createFileDialog()
-        fd.isMultiSelectEnabled = False
-        fd.title  = "Select blade JSON specification"
-        fd.filter = "JSON (*.json)"
-        if fd.showOpen() != adsk.core.DialogResults.DialogOK:
-            return
-        json_path = Path(fd.filename)
+        # fd = ui.createFileDialog()
+        # fd.isMultiSelectEnabled = False
+        # fd.title  = "Select blade JSON specification"
+        # fd.filter = "JSON (*.json)"
+        # if fd.showOpen() != adsk.core.DialogResults.DialogOK:
+        #     return
+        # json_path = Path(fd.filename)
 
 
 
-        ROOT_DIR = Path(__file__).resolve().parent.parent
+        ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
+        json_path = ROOT_DIR / "naca_data" / "blade_profiles" / "blade_profile_test.json"
         airfoil_dir = ROOT_DIR / "naca_data" / "airfoil_profiles"
         save_path = ROOT_DIR / "naca_data" / "blade_models" / f"{Path(json_path).stem}.f3d"
 
@@ -164,11 +165,11 @@ def run(context):
 
 
 
-        fol = ui.createFolderDialog()
-        fol.title = "Select folder containing .dat air-foil files"
-        if fol.showDialog() != adsk.core.DialogResults.DialogOK:
-            return
-        airfoil_dir = Path(fol.folder)
+        # fol = ui.createFolderDialog()
+        # fol.title = "Select folder containing .dat air-foil files"
+        # if fol.showDialog() != adsk.core.DialogResults.DialogOK:
+        #     return
+        # airfoil_dir = Path(fol.folder)
         #
         # sf = ui.createFileDialog()
         # sf.title  = "Save blade as Fusion archive"
@@ -197,9 +198,10 @@ def run(context):
         profiles = []
     # In your section loop, store the leading edge points
         le_points = []
+        te_points = []
 
         for sec in sections:
-            z_off  = to_du(sec["radial_pos_m"])
+            z_off  = to_du(sec["radial_pos_m"] - HUB_RADIUS)
             chord  = to_du(sec["chord_len_m"])
             twist  = sec["twist_rad"]
 
@@ -210,13 +212,18 @@ def run(context):
             else:
                 pts2d = reorder_to_te_clockwise(get_naca_coordinates(sec.get("naca")))
 
-            # Find the leading edge point (point with minimum x value)
             le_idx = min(range(len(pts2d)), key=lambda i: pts2d[i][0])
             le_2d = pts2d[le_idx]
 
-            # Transform to 3D space with correct position
             le_3d = transform([le_2d], chord, twist, z_off=z_off)[0]
             le_points.append(le_3d)
+
+            te_idx = max(range(len(pts2d)), key=lambda i: pts2d[i][0])
+            te_2d = pts2d[te_idx]
+
+            te_3d = transform([te_2d], chord, twist, z_off=z_off)[0]
+            te_points.append(te_3d)
+
 
             p_in = root.constructionPlanes.createInput()
             p_in.setByOffset(base_plane, adsk.core.ValueInput.createByReal(z_off))
@@ -228,28 +235,31 @@ def run(context):
             )
             profiles.append(sk.profiles.item(0))
 
-            # Create rails between adjacent leading edge points
             le_rails = []
             for i in range(len(le_points) - 1):
                 rail = generate_rail_guide(le_points[i], le_points[i+1], root)
                 le_rails.append(rail)
 
-            # Use these rails in your lofting process
+            te_rails = []
+            for i in range(len(te_points) - 1):
+                rail = generate_rail_guide(te_points[i], te_points[i+1], root)
+                te_rails.append(rail)
+
             lofts = root.features.loftFeatures
-            te_path = generate_te_guide(root, to_du)
+            # te_path = generate_te_guide(root, to_du)
             blade_body = None
 
-            for i in range(1, len(profiles)):
-                lf_in = lofts.createInput(
-                    adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-                    if blade_body is None
-                    else adsk.fusion.FeatureOperations.JoinFeatureOperation
-                )
+            for i in range(len(le_rails) - 1, 0, -1):
+                if i % 2 == 0:
+                    lf_in = lofts.createInput(adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+                else:
+                    lf_in = lofts.createInput(adsk.fusion.FeatureOperations.JoinFeatureOperation)
 
-                lf_in.centerLineOrRails.addRail(te_path)     # Trailing edge rail
-                lf_in.centerLineOrRails.addRail(le_rails[i-1])  # Leading edge rail for this section pair
 
-                lf_in.loftSections.add(profiles[i-1])
+                lf_in.centerLineOrRails.addRail(le_rails[i])  # Leading edge rail for this section pair
+                lf_in.centerLineOrRails.addRail(te_rails[i])     # Trailing edge rail
+
+                lf_in.loftSections.add(profiles[i+1])
                 lf_in.loftSections.add(profiles[i])
 
                 lf_in.isSolid = True
