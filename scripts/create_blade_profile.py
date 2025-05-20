@@ -45,8 +45,8 @@ PROFILE_RESOLUTION = 20
 # ------------- CHORD/TWIST DISTRIBUTION ------------- #
 # ---------------------------------------------------- #
 CHORD_DISTRIBUTION = lambda r:  8 * math.pi * r / (NUM_BLADES * CL_DES) * (1 - math.cos(PHI_DISTRIBUTION(r)))
-PHI_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / (TSR * r/TIP_RADIUS)) * 30/46
-TWIST_DISTRIBUTION = lambda r: PHI_DISTRIBUTION(r) - A_DES
+PHI_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / (TSR * r/TIP_RADIUS))
+TWIST_DISTRIBUTION = lambda r: (PHI_DISTRIBUTION(r) - A_DES) * 30/46
 # ---------------------------------------------------- #
 # ------------------ DESIGN PARAMS ------------------- #
 # ---------------------------------------------------- #
