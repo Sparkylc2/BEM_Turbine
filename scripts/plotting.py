@@ -80,7 +80,6 @@ def apply_grid_styling(ax):
         spine.set_linewidth(1)
 
 
-
 def setup_3d_plot(ax, elev=25, azim=300):
     """Configure a 3D axes with consistent styling"""
     # Set orthographic projection
@@ -102,21 +101,6 @@ def setup_3d_plot(ax, elev=25, azim=300):
         spine.set_linewidth(1)
 
     return ax
-
-
-def apply_3d_labels(ax, x_label="X-axis", y_label="Y-axis", z_label="Z-axis", fontsize=20):
-    label_padding = 1.1
-
-    xlim, ylim, zlim = ax.get_xlim(), ax.get_ylim(), ax.get_zlim()
-
-    ax.text(1.04 * (xlim[0] + xlim[1]) / 2, ylim[1], 1.0025 * label_padding * zlim[1],
-            x_label, ha='center', va='center', fontsize=fontsize)
-    ax.text(xlim[0], (ylim[0] + ylim[1]) / 2, 1.025 * label_padding * zlim[1],
-            y_label, ha='center', va='center', fontsize=fontsize)
-    ax.text(label_padding * 0.9 * xlim[0], ylim[0] * label_padding * 0.999,
-            1.1 * (zlim[0] + zlim[1]) / 2, z_label, ha='center', va='center', fontsize=fontsize)
-
-
 def save_plot(fig, filename, dpi=300):
     fig.savefig(f"{SAVE_DIR}/{filename}.png", format="png", dpi=dpi)
     plt.close(fig)
@@ -174,6 +158,66 @@ def transform(points, chord_len, twist_rad, z_off, shift):
     return np.array(x_coord), np.array(y_coord), np.array(z_coord)
 
 
+def plot_chord_distribution(data):
+
+    chord_eqn = 'c(r) = $\\frac{\\mathbf{8} \\pi r(\\mathbf{1} - \\mathbf{cos\\mathbf{φ}})} {BC_{L,des}}$'
+    fig, ax = plt.subplots(figsize=(10, 10))
+    data, R, CHORD = data
+    ax.plot(R*100, CHORD*100,
+            label=chord_eqn,
+            color=red_color,
+            linestyle='-',
+            linewidth=3,  # Increased thickness
+            solid_capstyle='round',
+            )
+
+    ax.set_xlabel('Radial Position (mm)', fontsize=20)
+    ax.set_ylabel('Chord Length (mm)', fontsize=20, labelpad = 20)
+    ax.set_title('Chord Distribution', fontsize=20)
+    ax.legend(loc='upper right',
+              frameon=True,
+              framealpha=0.7,
+              edgecolor='black',
+              fontsize=20)
+    ax.set_xlim(min(R)*100, max(R)*100)
+    ax.set_ylim(min(R)*100, max(R)*100)
+    apply_grid_styling(ax)
+    ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+    ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+    plt.tight_layout()
+    plt.show()
+
+def plot_twist_distribution(data):
+    twist_eqn = '$\\mathbf{β(r)} = \\mathbf{\\frac{\\mathbf{2}}{\\mathbf{3}} arctan\\;\\frac{R_{tip}}{λ_r r} - α_{des}}$'
+    fig, ax = plt.subplots()
+    data, R, TWIST = data
+
+    ax.plot(R * 100, TWIST * 180/math.pi,
+            label=twist_eqn,
+            color=blue_color,
+            linestyle='-',
+            linewidth=3,
+            solid_capstyle='round',
+            )
+
+    ax.set_xlabel('Radial Position (mm)', fontsize=20)
+    ax.set_ylabel('Twist  (deg)', fontsize=20, labelpad = 20)
+    ax.set_title('Twist Distribution', fontsize=20)
+    ax.legend(loc='upper right',
+              frameon=True,
+              framealpha=0.7,
+              edgecolor='black',
+              fontsize=20)
+    # ax.set_xlim(0, 0.227)
+    # ax.set_ylim(0, 0.15)
+    ax.set_xlim(min(R) * 100, max(R) * 100)
+    ax.set_ylim(min(TWIST * 180/math.pi), max(TWIST * 180/math.pi))
+    apply_grid_styling(ax)
+    ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+    ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+    plt.tight_layout()
+    plt.show()
+
 def plot_chord_distribution_with_airfoils(data, save_filename=None, elev=10, azim=300):
     data, R, CHORD = data
     blades = data["blades"]
@@ -183,24 +227,22 @@ def plot_chord_distribution_with_airfoils(data, save_filename=None, elev=10, azi
     fig = plt.figure(figsize=(10, 6.5))
     ax = fig.add_subplot(111, projection='3d')
 
-    setup_3d_plot(ax, elev=elev, azim=azim)
+
+    ax.view_init(elev=20, azim=300)  # Adjust these values for best view
 
     start_z = 10.0
     end_z = -10.0
-
     min_y = 10.0
     max_y = -10.0
 
+    # Plot airfoil profiles
     for section in blades:
         filename = ROOT_DIR / "naca_data" / "airfoil_profiles" / section["coordinate_file"]
         z_off = section["radial_pos_m"]
         chord_len = section["chord_len_m"]
 
         airfoil_coords = get_dat_coordinates(filename)
-        x, y, z = transform(airfoil_coords, chord_len, 0.0, z_off, shift)
-        x = x
-        y = y
-        z = z
+        x, y, z = transform(airfoil_coords, chord_len, section["twist_rad"], z_off, shift)
 
         if min(z) < start_z:
             start_z = min(z)
@@ -212,40 +254,54 @@ def plot_chord_distribution_with_airfoils(data, save_filename=None, elev=10, azi
         if max(y) > max_y:
             max_y = max(y)
 
-
-
+        # Plot the airfoil profiles
         ax.plot(np.append(z, z[0]), np.append(y, y[0]), -np.append(x, x[0]),
                 color='black',
                 alpha=0.8,
-                linestyle='--',
+                linestyle='-',  # Changed from dashed to solid
                 linewidth=0.8,
-                markeredgewidth=1,
                 solid_capstyle='round',
                 )
 
+    # Add reference plane for chord distribution
+    z_min, z_max = ax.get_zlim()
+    x_min, x_max = start_z, end_z
+    # Optional - create a slightly transparent reference plane
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 2), np.linspace(z_min, z_max, 2))
+    ax.plot_surface(xx, np.zeros_like(xx), yy, alpha=0.1, color='gray')
 
+    # Plot chord distribution with thicker, more prominent line
     ax.plot(R, 0, CHORD,
             label='Chord Distribution',
             color=red_color,
             linestyle='-',
-            linewidth=2,
-            markeredgewidth=1,
+            linewidth=3,  # Increased thickness
             solid_capstyle='round',
+            zorder=100,  # Ensure it's on top
             )
 
-    ax = plt.gca()
-    y_min = min_y * 0.9 if min_y > 0 else min_y * 1.1
-    y_max = max_y * 0.9 if max_y > 0 else max_y * 1.1
 
+    ax.plot([0, 0.227], [0, 0], [0, 0], 'k-', alpha=0.3, linewidth=0.5)
+
+    # Set tight limits
     ax.set_xlim(0, 0.227)
     ax.set_zlim(0, 0.15)
     ax.set_ylim(0, 0.15)
 
-    ax.legend(loc='upper right', fontsize=16, frameon=True,
-              edgecolor='black', framealpha=1.0,
-              bbox_to_anchor=(1.35, 0.8))
+    # Orthographic projection for cleaner display
+    ax.set_proj_type('ortho')
 
-    ax.set_title('3D Airfoil Shapes', fontsize=20, pad=20)
+    # Create a custom legend without a box
+    from matplotlib.lines import Line2D
+    custom_line = Line2D([0], [0], color=red_color, lw=3)
+    ax.legend([custom_line], ['Chord Distribution'],
+              loc='upper right',
+              frameon=True,
+              framealpha=0.7,
+              edgecolor='none')
+
+    # Remove title for cleaner look
+    # ax.set_title('Blade Geometry', fontsize=20, pad=20)
 
     fig.tight_layout()
 
@@ -264,4 +320,7 @@ BETA = np.array([TWIST_DISTRIBUTION(r) for r in R])
 with open(ROOT_DIR / "naca_data" / "blade_profiles" / "blade_profile_test.json", 'r') as f:
     data = json.load(f)
 
+
 plot_chord_distribution_with_airfoils((data, R, CHORD))
+plot_chord_distribution((data, R, CHORD))
+plot_twist_distribution((data, R, BETA))

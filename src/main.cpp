@@ -67,7 +67,7 @@ int main() {
 
     figure();
     hold(on);
-    plot(tsr_vec, cp_vec) -> color("green");
+    plot(tsr_vec, torque_vec) -> color("green");
     xlabel("Tip-Speed Ratio (TSR)");
     ylabel("C_p");
     title("C_p vs TSR");

@@ -15,20 +15,20 @@ namespace xf {
         std::string naca       = "2412";           // ignored if coord_file!=""
         std::string coord_file;                    // rel. path
         // --- mesh -------------------------------------------------------------------
-        int    panels      = 160;
+        int    panels      = 200;
         double te_le_ratio = 0.15;
         // --- flow -------------------------------------------------------------------
-        dimensionless_t re     = 1e6;
+        dimensionless_t re     = 1e7;
         dimensionless_t mach   = 0.0;
         double n_crit = 9.0;
         // --- solver -----------------------------------------------------------------
-        int    ITER   = 300;
+        int    ITER   = 500;
         double VACCEL = 0.01;
         // --- α-sweep -----------------------------------------------------------------
         degree_t alpha = degree_t(0.0);
         degree_t alpha_neg = degree_t(-6.0);
-        degree_t alpha_pos = degree_t(6.0);
-        degree_t d_alpha = degree_t(1);
+        degree_t alpha_pos = degree_t(8.0);
+        degree_t d_alpha = degree_t(0.25);
         // --- misc -------------------------------------------------------------------
         bool        save_cp  = false;
         std::string tag      = "run";

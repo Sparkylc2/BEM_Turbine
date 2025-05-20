@@ -76,7 +76,6 @@ void BladeSection::update_cl_cd() {
         }
 
         basePolars.emplace(polarName, basePolar);
-        std::cout << basePolar.pts.size() << std::endl;
     } else {
         basePolar = it -> second;
     }
@@ -108,11 +107,13 @@ void BladeSection::post_bem_routine() {
     // std::cout << "Running post BEM routine for blade section " << naca_code << " at radius: " << radial_position << "\n";
     const radian_t inflow_angle = alpha + twist_angle;
 
-    const meters_per_second_t w1 = parent_rotor.g_wind_speed() * (1.0 - a) / math::sin(inflow_angle);
-    const meters_per_second_t w2 = meters_per_second_t((parent_rotor.g_angular_velocity() * radial_position).value()) * (1.0 + a_prime) / math::cos(inflow_angle);
+    meters_per_second_t w1 = parent_rotor.g_wind_speed() * (1.0 - a) / math::sin(inflow_angle);
+    meters_per_second_t w2 = meters_per_second_t((parent_rotor.g_angular_velocity() * radial_position).value()) * (1.0 + a_prime) / math::cos(inflow_angle);
 
     if (math::abs(w1 - w2) > 1e-6_mps) {
         std::cerr << "Warning: Inflow angle is not converged!  " << "Residual = " << w1 - w2 << "\n";
+        w1 = 0_mps;
+        w2 = 0_mps;
     }
     this -> w = (w1 + w2) / 2.0;
     compute_differential_forces();
