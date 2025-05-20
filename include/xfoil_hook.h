@@ -131,10 +131,10 @@ namespace xf {
         static void init_airfoil_geometry(std::ofstream& ss, const Config& cfg) {
             if(!cfg.coord_file.empty()) {
                 ss << "LOAD " << cfg.coord_file << "\n";
-                ss << "\n";
             } else {
                 ss << "NACA " << cfg.naca << "\n";
             }
+            ss << "\n";
         }
 
         static void configure_airfoil(std::ofstream& ss, const Config& cfg) {

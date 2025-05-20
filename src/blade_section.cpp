@@ -16,7 +16,7 @@ void BladeSection::initialize_blade_section() {
     cfg.naca = naca_code;
     if (!coordinate_file.empty()) {
         if (parent_rotor.runner.get_runtime() == "docker") {
-            cfg.coord_file = "naca_data/airfoil_profiles/" + coordinate_file;
+            cfg.coord_file = "/work/naca_data/airfoil_profiles/" + coordinate_file;
             // std::cout << "Using coordinate file: " << cfg.coord_file << "\n";
         } else {
             cfg.coord_file = "../naca_data/airfoil_profiles/" + coordinate_file;
@@ -50,7 +50,6 @@ void BladeSection::update_cl_cd() {
 
     if (it == basePolars.end()) {
         std::cout << "Calculating polar for: " << polarName << std::endl;
-        // not optimal but im too lazy to change it now
         xf::XFOILRunner &runner = parent_rotor.runner;
 
         auto routine = [&](std::ofstream &ss) {
@@ -60,7 +59,7 @@ void BladeSection::update_cl_cd() {
             XFOILRunner::configure_airfoil(ss, cfg);
             XFOILRunner::configure_solver(ss, cfg);
             XFOILRunner::set_alpha_sweep(ss, cfg);
-            // XFOILRunner::save_airfoil(ss, cfg);
+            XFOILRunner::save_airfoil(ss, cfg);
             XFOILRunner::quit(ss);
         };
 
@@ -77,6 +76,7 @@ void BladeSection::update_cl_cd() {
         }
 
         basePolars.emplace(polarName, basePolar);
+        std::cout << basePolar.pts.size() << std::endl;
     } else {
         basePolar = it -> second;
     }
