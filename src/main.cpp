@@ -39,8 +39,8 @@ int main() {
 
 
 
-    double tsr_min = 0.0;
-    double tsr_max = 12;
+    double tsr_min = 3.0;
+    double tsr_max = 12.0;
 
     std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 200);
 
@@ -51,8 +51,8 @@ int main() {
 
     for (auto tsr: tsr_vec) {
         std::cout << "TSR: " << tsr << std::endl;
-        Rotor rotor("blade_profile_test");
-        rotor.initialize_rotor(tsr);
+        Rotor rotor("NREL_5MW_Blade");
+        rotor.initialize_rotor(dimensionless_t(tsr));
 
         rotor.run_bem();
         produced_power_vec.push_back(rotor.g_produced_power().value());
@@ -64,12 +64,16 @@ int main() {
 
 
 
-
+    double max_cp = *std::max_element(cp_vec.begin(), cp_vec.end());
+    auto max_cp_it = std::max_element(cp_vec.begin(), cp_vec.end());
+    size_t max_cp_index = std::distance(cp_vec.begin(), max_cp_it);
+    double max_tsr = tsr_vec[max_cp_index];
+    std::cout << "Max C_p: " << max_cp << " at TSR: " << max_tsr << std::endl;
 
 
     figure();
     hold(on);
-    plot(tsr_vec, torque_vec) -> color("green");
+    plot(tsr_vec, cp_vec) -> color("green");
     xlabel("Tip-Speed Ratio (TSR)");
     ylabel("C_p");
     title("C_p vs TSR");

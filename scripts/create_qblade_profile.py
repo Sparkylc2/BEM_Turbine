@@ -8,6 +8,7 @@ BASE_PATH = ROOT_DIR / "naca_data" / "blade_profiles"
 FILENAME = "blade_profile_test.json"
 
 
+# CURRENTLY DOESN'T WORK
 json_path = BASE_PATH / FILENAME
 def write_qblade_bld(
         filename: str,

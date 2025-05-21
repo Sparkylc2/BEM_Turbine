@@ -1,17 +1,19 @@
-# config.py
-import os
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
-from matplotlib.ticker import FixedLocator
 import matplotlib.ticker as mticker
-import numpy as np
-from matplotlib.ticker import ScalarFormatter
-from scipy.optimize import fsolve
 import pandas as pd
-
 from create_blade_profile import *
+
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = ROOT_DIR / "naca_data" / "blade_profiles"
+SAVE_DIR = ROOT_DIR / "scripts" / "plots"
+
+
+
+df = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_Reference_5MW_126.csv")
+print(df)
+
 
 def configure_plotting():
     fm.fontManager.addfont("/Library/Fonts/SF-Pro-Text-Light.otf")
@@ -77,7 +79,6 @@ def apply_grid_styling(ax):
 
     for spine in ax.spines.values():
         spine.set_linewidth(1)
-
 def setup_3d_plot(ax, elev=25, azim=300):
     ax.set_proj_type('ortho')
 
@@ -104,10 +105,6 @@ red_color = (1, 191 / 255, 191 / 255)
 blue_color = (191 / 255, 223 / 255, 1)
 green_color = (191 / 255, 1, 191 / 255)
 yellow_color = (1, 223 / 255, 191 / 255)
-
-ROOT_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR = ROOT_DIR / "naca_data" / "blade_profiles"
-SAVE_DIR = ROOT_DIR / "scripts" / "plots"
 
 
 
@@ -160,7 +157,7 @@ def plot_chord_distribution(data):
     chord_eqn = 'c(r) = $\\frac{\\mathbf{8} \\pi r(\\mathbf{1} - \\mathbf{cos\\mathbf{φ}})} {BC_{L,des}}$'
     fig, ax = plt.subplots(figsize=(10, 10))
     data, R, CHORD = data
-    ax.plot(R*100, CHORD*100,
+    ax.plot(R*1000, CHORD*1000,
             label=chord_eqn,
             color=red_color,
             linestyle='-',
@@ -176,8 +173,8 @@ def plot_chord_distribution(data):
               framealpha=0.7,
               edgecolor='black',
               fontsize=20)
-    ax.set_xlim(min(R)*100, max(R)*100)
-    ax.set_ylim(0, max(R)*100)
+    ax.set_xlim(min(R)*1000, max(R)*1000)
+    ax.set_ylim(0, max(R)*1000)
     apply_grid_styling(ax)
     ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
@@ -188,7 +185,7 @@ def plot_twist_distribution(data):
     fig, ax = plt.subplots()
     data, R, TWIST = data
 
-    ax.plot(R * 100, TWIST * 180/math.pi,
+    ax.plot(R * 1000, TWIST * 180/math.pi,
             label=twist_eqn,
             color=blue_color,
             linestyle='-',
@@ -209,7 +206,7 @@ def plot_twist_distribution(data):
     ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
 
-    ax.set_xlim(min(R) * 100, max(R) * 100)
+    ax.set_xlim(min(R) * 1000, max(R) * 1000)
     ax.set_ylim(0, max(TWIST * 180/math.pi))
     # ax.set_ylim(min(TWIST * 180/math.pi), max(TWIST * 180/math.pi))
     plt.tight_layout()

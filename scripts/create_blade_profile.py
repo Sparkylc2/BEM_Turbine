@@ -52,11 +52,11 @@ SHIFT = (1 - 0.321, -0.05, 0.0)
 # ---------------------------------------------------- #
 
 MAX_TWIST = math.radians(30)
-COEFF = MAX_TWIST / (2.0 / 3.0 * math.atan(1.0 / (TSR * HUB_RADIUS/TIP_RADIUS)))
+COEFF = MAX_TWIST / (2.0 / 3.0 * math.atan(1.0 / (TSR * HUB_RADIUS/TIP_RADIUS)) - A_DES)
 
 CHORD_DISTRIBUTION = lambda r:  8 * math.pi * r / (NUM_BLADES * CL_DES) * (1 - math.cos(PHI_DISTRIBUTION(r)))
-PHI_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / (TSR * r/TIP_RADIUS))
-TWIST_DISTRIBUTION = lambda r: (PHI_DISTRIBUTION(r) - A_DES) * COEFF
+PHI_DISTRIBUTION = lambda r: 2.0 / 3.0 * math.atan(1.0 / (TSR * r/TIP_RADIUS)) * COEFF
+TWIST_DISTRIBUTION = lambda r: (PHI_DISTRIBUTION(r) - A_DES)
 
 
 
