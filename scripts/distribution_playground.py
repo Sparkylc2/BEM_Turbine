@@ -88,6 +88,8 @@ r = np.linspace(HUB_RADIUS, TIP_RADIUS, 100)
 chord = np.array([CHORD_DISTRIBUTION(curr_r) for curr_r in r])
 beta = np.array([TWIST_DISTRIBUTION(curr_r) for curr_r in r])
 
+print(max(beta))
+
 
 
 
@@ -104,12 +106,12 @@ plt.title('Blade Chord Length Distribution')
 plt.legend(fontsize=16)
 plt.grid()
 plt.show()
-plt.savefig('blade_chord_length_distribution.svg', dpi=300)
+# plt.savefig('blade_chord_length_distribution.svg', dpi=300)
 
 
 
 plt.figure(figsize=(10, 6))
-plt.plot(r / TIP_RADIUS, beta, label='$\\frac{2}{3}\\tan^{-1}(\\frac{1}{\\lambda_r \\frac{r}{R_{tip}}})$', color='red')
+plt.plot(r / TIP_RADIUS, math.degrees(beta), label='$\\frac{2}{3}\\tan^{-1}(\\frac{1}{\\lambda_r \\frac{r}{R_{tip}}})$', color='red')
 plt.xlabel('$\\frac{r}{R}$', fontsize=16)
 plt.ylabel('$\\beta$  (rad)', fontsize=16)
 plt.xlim(0, 1)
@@ -117,7 +119,7 @@ plt.xlim(0, 1)
 plt.title('Blade Twist Angle Distribution')
 plt.legend()
 plt.grid()
-plt.savefig('blade_twist_angle_distribution.svg', dpi=300)
+# plt.savefig('blade_twist_angle_distribution.svg', dpi=300)
 plt.show()
 
 

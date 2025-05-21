@@ -26,7 +26,7 @@ namespace xf {
         double VACCEL = 0.01;
         // --- α-sweep -----------------------------------------------------------------
         degree_t alpha = degree_t(0.0);
-        degree_t alpha_neg = degree_t(-6.0);
+        degree_t alpha_neg = degree_t(-6);
         degree_t alpha_pos = degree_t(8.0);
         degree_t d_alpha = degree_t(0.25);
         // --- misc -------------------------------------------------------------------

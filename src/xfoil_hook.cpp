@@ -10,5 +10,6 @@ namespace xf {
         {"POLAR_TABLE", "/naca_data/polar_tables/"},
         {"BLADE", "/naca_data/blade_profiles/"},
         {"TMP", "/naca_data/run_tmp/"},
+        {"SAVE", "/naca_data/bem_data/"}
     };
 }

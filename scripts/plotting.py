@@ -9,6 +9,7 @@ import matplotlib.ticker as mticker
 import numpy as np
 from matplotlib.ticker import ScalarFormatter
 from scipy.optimize import fsolve
+import pandas as pd
 
 from create_blade_profile import *
 
@@ -70,8 +71,6 @@ def configure_plotting():
     plt.rcParams["lines.markersize"] = 8
     plt.rcParams["lines.markeredgewidth"] = 1
     plt.rcParams["errorbar.capsize"] = 5
-
-
 def apply_grid_styling(ax):
     ax.grid(which='major', linestyle='-', linewidth=0.7, alpha=0.8)
     ax.grid(which='minor', linestyle='--', linewidth=0.5, alpha=0.5)
@@ -79,24 +78,17 @@ def apply_grid_styling(ax):
     for spine in ax.spines.values():
         spine.set_linewidth(1)
 
-
 def setup_3d_plot(ax, elev=25, azim=300):
-    """Configure a 3D axes with consistent styling"""
-    # Set orthographic projection
     ax.set_proj_type('ortho')
 
-    # Set default viewing angle
     ax.view_init(elev=elev, azim=azim)
 
-    # Configure tick parameters
     for axis in ['x', 'y', 'z']:
         ax.tick_params(axis=axis, pad=10, labelsize=16)
 
-    # Configure grid
     ax.grid(which='major', linestyle=':', linewidth=0.7, alpha=0.8)
     ax.grid(which='minor', linestyle='--', linewidth=0.5, alpha=0.5)
 
-    # Ensure consistent spine styling
     for spine in ax.spines.values():
         spine.set_linewidth(1)
 
@@ -157,6 +149,11 @@ def transform(points, chord_len, twist_rad, z_off, shift):
         z_coord.append(oz)
     return np.array(x_coord), np.array(y_coord), np.array(z_coord)
 
+def get_bem_data(filename):
+    filename = BASE_DIR / filename
+    df = pd.read_csv(filename)
+    return df.to_numpy()
+
 
 def plot_chord_distribution(data):
 
@@ -186,7 +183,6 @@ def plot_chord_distribution(data):
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
     plt.tight_layout()
     plt.show()
-
 def plot_twist_distribution(data):
     twist_eqn = '$\\mathbf{β(r)} = \\mathbf{\\frac{\\mathbf{2}}{\\mathbf{3}} arctan\\;\\frac{R_{tip}}{λ_r r} - α_{des}}$'
     fig, ax = plt.subplots()
@@ -217,7 +213,6 @@ def plot_twist_distribution(data):
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
     plt.tight_layout()
     plt.show()
-
 def plot_chord_distribution_with_airfoils(data, save_filename=None, elev=10, azim=300):
     data, R, CHORD = data
     blades = data["blades"]
@@ -311,6 +306,16 @@ def plot_chord_distribution_with_airfoils(data, save_filename=None, elev=10, azi
         plt.show()
 
     return fig, ax
+
+
+def plot_cp_tsr_bem_our_blade():
+    bem_data = get_bem_data("blade_profile_test.json")
+
+# def plot_
+
+
+
+
 
 R = np.linspace(HUB_RADIUS, TIP_RADIUS, 100)
 CHORD = np.array([CHORD_DISTRIBUTION(r) for r in R])

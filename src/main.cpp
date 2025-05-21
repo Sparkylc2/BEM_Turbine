@@ -65,6 +65,8 @@ int main() {
 
 
 
+
+
     figure();
     hold(on);
     plot(tsr_vec, torque_vec) -> color("green");
@@ -74,34 +76,60 @@ int main() {
     grid(on);
     show();
 
+    //
+    //
+    // figure();
+    // hold(on);
+    // auto l1 = plot(tsr_vec, produced_power_vec);
+    // l1 -> color("blue");
+    // l1 -> line_width(2.0);
+    // l1 -> line_style("--");
+    // l1 -> marker("o");
+    // l1 -> marker_size(6.0);
+    // plot(tsr_vec, total_power_vec)->color("red");
+    // legend("Produced Power (, Total Power");
+    // xlabel("Tip-Speed Ratio (TSR)");
+    // ylabel("Power (W)");
+    // title("Produced Power vs TSR");
+    // grid(on);
+    // show();
+    //
+    //
+    // figure();
+    // hold(on);
+    // plot(tsr_vec, drag_vec)->color("blue");
+    // plot(tsr_vec, torque_vec)->color("red");
+    // legend("Drag (N), Torque Power (Nm)");
+    // xlabel("Tip-Speed Ratio (TSR)");
+    // ylabel("N/Nm");
+    // title("Produced Power vs TSR");
+    // grid(on);
+    // show();
+    //
 
-    figure();
-    hold(on);
-    auto l1 = plot(tsr_vec, produced_power_vec);
-    l1 -> color("blue");
-    l1 -> line_width(2.0);
-    l1 -> line_style("--");
-    l1 -> marker("o");
-    l1 -> marker_size(6.0);
-    plot(tsr_vec, total_power_vec)->color("red");
-    legend("Produced Power (, Total Power");
-    xlabel("Tip-Speed Ratio (TSR)");
-    ylabel("Power (W)");
-    title("Produced Power vs TSR");
-    grid(on);
-    show();
 
 
-    figure();
-    hold(on);
-    plot(tsr_vec, drag_vec)->color("blue");
-    plot(tsr_vec, torque_vec)->color("red");
-    legend("Drag (N), Torque Power (Nm)");
-    xlabel("Tip-Speed Ratio (TSR)");
-    ylabel("N/Nm");
-    title("Produced Power vs TSR");
-    grid(on);
-    show();
+    std::ostringstream file;
+    file << (xf::Config::g_save_path("SAVE")) << "recent_run.csv";
+
+    std::ofstream out(file.str());
+    if (!out.is_open()) {
+        std::cerr << "Could not open file " << file.str() << std::endl;
+    }
+    out << "TSR, DRAG (N), TORQUE (Nm), PRODUCED POWER (W), TOTAL POWER (W), C_P" << std::endl;
+
+    for (size_t i = 0; i < tsr_vec.size(); i++) {
+        out << tsr_vec[i] << ","
+            << drag_vec[i] << ","
+            << torque_vec[i] << ","
+            << produced_power_vec[i] << ","
+            << total_power_vec[i] << ","
+            << cp_vec[i] << std::endl;
+    }
+
+    out.close();
+    std::cout << "Saved results to  " << file.str() << std::endl;
+
 
 
     return 0;

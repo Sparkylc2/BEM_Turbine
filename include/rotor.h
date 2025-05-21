@@ -67,8 +67,6 @@ public:
     static double simulate_rotor(Rotor& rotor, double dt);
 
 
-
-
     const dimensionless_t& g_num_blades() const { return num_blades; }
     const meter_t& g_rotor_radius() const { return rotor_radius; }
     const dimensionless_t& g_rotor_tsr() const { return tsr; }
