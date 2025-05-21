@@ -177,7 +177,7 @@ def plot_chord_distribution(data):
               edgecolor='black',
               fontsize=20)
     ax.set_xlim(min(R)*100, max(R)*100)
-    ax.set_ylim(min(R)*100, max(R)*100)
+    ax.set_ylim(0, max(R)*100)
     apply_grid_styling(ax)
     ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
@@ -205,12 +205,13 @@ def plot_twist_distribution(data):
               edgecolor='black',
               fontsize=20)
     # ax.set_xlim(0, 0.227)
-    # ax.set_ylim(0, 0.15)
-    ax.set_xlim(min(R) * 100, max(R) * 100)
-    ax.set_ylim(min(TWIST * 180/math.pi), max(TWIST * 180/math.pi))
     apply_grid_styling(ax)
     ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+
+    ax.set_xlim(min(R) * 100, max(R) * 100)
+    ax.set_ylim(0, max(TWIST * 180/math.pi))
+    # ax.set_ylim(min(TWIST * 180/math.pi), max(TWIST * 180/math.pi))
     plt.tight_layout()
     plt.show()
 def plot_chord_distribution_with_airfoils(data, save_filename=None, elev=10, azim=300):
