@@ -19,6 +19,6 @@
   "rotor_hub_radius_m": 1.5,
   "rotor_radius_m": 63.0,
   "num_blades": 3,
-  "tip_speed_ratio": 3.5,
+  "tip_speed_ratio": 7.55,
   "wind_speed_mps": 8.0
 }

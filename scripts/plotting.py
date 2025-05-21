@@ -1,18 +1,17 @@
+import re
+
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import matplotlib.ticker as mticker
 import pandas as pd
+from scipy.interpolate import splprep, splev
+
 from create_blade_profile import *
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = ROOT_DIR / "naca_data" / "blade_profiles"
 SAVE_DIR = ROOT_DIR / "scripts" / "plots"
-
-
-
-df = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_Reference_5MW_126.csv")
-print(df)
 
 
 def configure_plotting():
@@ -128,6 +127,27 @@ def get_dat_coordinates(filename):
             continue
 
     return np.array(coordinates)
+
+def parse_qblade_file(filename):
+    filepath = ROOT_DIR / "naca_data" / "bem_data" / "NREL_DATA_QBLADE"/ filename
+    x = []
+    y = []
+    with open(filepath, 'r') as f:
+        for line in f:
+            if line.startswith('#') or line.startswith('New Turbine') or line.startswith('Windspeed'):
+                continue
+            parts = re.split(r'\s+|\t', line.strip())
+            if len(parts) >= 2 and parts[0] != 'END':
+                try:
+                    curr_x = float(parts[0])
+                    curr_y = float(parts[1])
+                    x.append(curr_x)
+                    y.append(curr_y)
+                except ValueError:
+                    continue
+
+    return x, y
+
 def transform(points, chord_len, twist_rad, z_off, shift):
     x_coord, y_coord, z_coord = [], [], []
     shift_x, shift_y, shift_z = shift
@@ -211,93 +231,102 @@ def plot_twist_distribution(data):
     # ax.set_ylim(min(TWIST * 180/math.pi), max(TWIST * 180/math.pi))
     plt.tight_layout()
     plt.show()
-def plot_chord_distribution_with_airfoils(data, save_filename=None, elev=10, azim=300):
+
+
+
+def plot_blade_with_distribution_info(data, save_filename=None, elev=10, azim=300):
     data, R, CHORD = data
     blades = data["blades"]
     shift = tuple(data["shift"])
-    shift = (0, 0, 0)
 
     fig = plt.figure(figsize=(10, 6.5))
     ax = fig.add_subplot(111, projection='3d')
 
 
-    ax.view_init(elev=20, azim=300)  # Adjust these values for best view
+    ax.view_init(elev=30, azim=140)
 
-    start_z = 10.0
-    end_z = -10.0
-    min_y = 10.0
-    max_y = -10.0
 
-    # Plot airfoil profiles
+    airfoil_zs = []
+    te_pts = []
+    le_pts = []
+
     for section in blades:
         filename = ROOT_DIR / "naca_data" / "airfoil_profiles" / section["coordinate_file"]
         z_off = section["radial_pos_m"]
         chord_len = section["chord_len_m"]
 
+        airfoil_zs.append(z_off)
+
         airfoil_coords = get_dat_coordinates(filename)
         x, y, z = transform(airfoil_coords, chord_len, section["twist_rad"], z_off, shift)
+        le_idx = np.argmin(airfoil_coords[:, 0])
+        le_point = airfoil_coords[le_idx]
+        le_idx = np.argmax(airfoil_coords[:, 0])
+        te_point = airfoil_coords[le_idx]
 
-        if min(z) < start_z:
-            start_z = min(z)
-        if max(z) > end_z:
-            end_z = max(z)
+        le_x, le_y, le_z = transform(le_point[None, :], chord_len, section["twist_rad"], z_off, shift)
+        te_x, te_y, te_z = transform(te_point[None, :], chord_len, section["twist_rad"], z_off, shift)
 
-        if min(y) < min_y:
-            min_y = min(y)
-        if max(y) > max_y:
-            max_y = max(y)
+        te_pts.append([te_x[0], te_y[0], te_z[0]])
+        le_pts.append([le_x[0], le_y[0], le_z[0]])
 
-        # Plot the airfoil profiles
-        ax.plot(np.append(z, z[0]), np.append(y, y[0]), -np.append(x, x[0]),
+        ax.plot(np.append(z, z[0])*1000, np.append(y, y[0])*1000, -np.append(x, x[0])*1000,
                 color='black',
                 alpha=0.8,
-                linestyle='-',  # Changed from dashed to solid
+                linestyle='--',
                 linewidth=0.8,
                 solid_capstyle='round',
                 )
 
-    # Add reference plane for chord distribution
-    z_min, z_max = ax.get_zlim()
-    x_min, x_max = start_z, end_z
-    # Optional - create a slightly transparent reference plane
-    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 2), np.linspace(z_min, z_max, 2))
-    ax.plot_surface(xx, np.zeros_like(xx), yy, alpha=0.1, color='gray')
+    center_line_x = np.array([HUB_RADIUS, TIP_RADIUS * 1000])
+    center_line_yz = np.array([0, 0])
 
-    # Plot chord distribution with thicker, more prominent line
-    ax.plot(R, 0, CHORD,
-            label='Chord Distribution',
+    ax.plot(center_line_x, center_line_yz, center_line_yz,
             color=red_color,
-            linestyle='-',
-            linewidth=3,  # Increased thickness
+            linestyle='--',
+            linewidth=2,
             solid_capstyle='round',
-            zorder=100,  # Ensure it's on top
+            label='Rotation Axis',
+            alpha=1.0
             )
 
 
-    ax.plot([0, 0.227], [0, 0], [0, 0], 'k-', alpha=0.3, linewidth=0.5)
+    te_pts = np.array(te_pts)
+    le_pts = np.array(le_pts)
 
-    # Set tight limits
-    ax.set_xlim(0, 0.227)
-    ax.set_zlim(0, 0.15)
-    ax.set_ylim(0, 0.15)
+    te_x = te_pts[:, 0]
+    te_y = te_pts[:, 1]
+    te_z = te_pts[:, 2]
 
-    # Orthographic projection for cleaner display
+    le_x = le_pts[:, 0]
+    le_y = le_pts[:, 1]
+    le_z = le_pts[:, 2]
+
+    tck, u = splprep([le_y, le_z], s=0)
+    u_fine = np.linspace(0, 1, 100)
+    y_spline, z_spline = splev(u_fine, tck)
+
+    x_spline = np.interp(u_fine, np.linspace(0, 1, len(le_x)), le_x)
+
+    ax.plot(z_spline * 1000, y_spline * 1000, -x_spline * 1000, color="black", linewidth=0.8, label='Chord Line', alpha = 0.8)
+
+    tck, u = splprep([te_y, te_z], s=0)
+    y_spline, z_spline = splev(u_fine, tck)
+
+    x_spline = np.interp(u_fine, np.linspace(0, 1, len(te_x)), te_x)
+
+    ax.plot(z_spline * 1000, y_spline * 1000, -x_spline * 1000, color="black", linewidth=0.8, alpha = 0.8)
+
+
+    ax.scatter(np.array(airfoil_zs) * 1000, np.zeros(len(airfoil_zs)), np.zeros(len(airfoil_zs)),
+               marker='o', color=green_color, edgecolor="black", label='Max Thickness on Camber Line')
+    ax.set_xlim(0.0, 227)
     ax.set_proj_type('ortho')
-
-    # Create a custom legend without a box
-    from matplotlib.lines import Line2D
-    custom_line = Line2D([0], [0], color=red_color, lw=3)
-    ax.legend([custom_line], ['Chord Distribution'],
-              loc='upper right',
-              frameon=True,
-              framealpha=0.7,
-              edgecolor='none')
-
-    # Remove title for cleaner look
-    # ax.set_title('Blade Geometry', fontsize=20, pad=20)
+    ax.legend(loc='upper right', frameon=True, framealpha=0.7, edgecolor='black', fontsize=10)
 
     fig.tight_layout()
 
+    ax.set_aspect('equal')
     if save_filename:
         save_plot(fig, save_filename, dpi=2000)
     else:
@@ -306,8 +335,110 @@ def plot_chord_distribution_with_airfoils(data, save_filename=None, elev=10, azi
     return fig, ax
 
 
-def plot_cp_tsr_bem_our_blade():
-    bem_data = get_bem_data("blade_profile_test.json")
+def plot_bem_verification():
+
+    df = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_DATA" / "NREL_Reference_5MW_126.csv")
+
+    nrel_wind_speed = df["Wind Speed [m/s]"]
+    nrel_power = df["Power [kW]"]
+    nrel_cp = df["Cp [-]"]
+    nrel_thrust = df["Thrust [kN]"]
+
+    bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "recent_run.csv")
+    bem_wind_speed = bem_data["WIND SPEED (m/s)"]
+    bem_thrust = bem_data[" THRUST (N)"]
+    bem_power = bem_data[" PRODUCED POWER (W)"]
+    bem_cp = bem_data[" C_P"]
+
+    qblade_wind_speed, qblade_cp = parse_qblade_file("cp_v_windspeed.txt")
+    qblade_wind_speed, qblade_power = parse_qblade_file("power_v_windspeed.txt")
+    qblade_wind_speed, qblade_thrust = parse_qblade_file("thrust_v_windspeed.txt")
+    qblade_wind_speed = np.array(qblade_wind_speed)
+
+    qblade_cp = np.array(qblade_cp)
+    qblade_power = np.array(qblade_power)
+    qblade_thrust = np.array(qblade_thrust)
+
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    ax.plot(nrel_wind_speed, nrel_cp, label='NREL $\\text{C}_{\\mathbf{P}}$', color=red_color, linestyle='-', linewidth=3)
+    ax.plot(bem_wind_speed, bem_cp, label='BEM $\\text{C}_{\\mathbf{P}}$', color=blue_color, linestyle='-', linewidth=3)
+    ax.plot(qblade_wind_speed, qblade_cp, label='QBlade $\\text{C}_{\\mathbf{P}}$', color=green_color, linestyle='-', linewidth=3)
+    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, bem_wind_speed, bem_cp),
+        linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
+    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, qblade_wind_speed, qblade_cp),
+            linestyle='None', marker='o', color=green_color, markeredgecolor='black', markersize=5)
+    ax.plot(nrel_wind_speed, nrel_cp, linestyle='None', marker='o', color=red_color, markeredgecolor='black', markersize=5)
+
+
+    ax.set_xlim(3.0, 25.0)
+    ax.set_xlabel('Wind Speed (m/s)', fontsize=20)
+    ax.set_ylabel('$\\mathbf{C}_{\\mathbf{P}}$', fontsize=20)
+    ax.set_title('$\\mathbf{C}_{\\mathbf{P}}$ vs Wind Speed', fontsize=20)
+    ax.legend(loc='upper right', frameon=True, framealpha=0.7, edgecolor='black', fontsize=20)
+
+    ax.set_xlim(min(nrel_wind_speed), max(nrel_wind_speed))
+    ax.set_ylim(0, 0.59)
+    apply_grid_styling(ax)
+    ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+    ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+    plt.tight_layout()
+    plt.show()
+
+
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    ax.plot(nrel_wind_speed, nrel_power, label='NREL Power', color=red_color, linestyle='-', linewidth=3)
+    ax.plot(bem_wind_speed, bem_power/1000, label='BEM Power', color=blue_color, linestyle='-', linewidth=3)
+    ax.plot(qblade_wind_speed, qblade_power/1000, label='QBlade Power', color=green_color, linestyle='-', linewidth=3)
+
+    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, bem_wind_speed, bem_power/1000),
+            linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
+    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, qblade_wind_speed, qblade_power/1000),
+            linestyle='None', marker='o', color=green_color, markeredgecolor='black', markersize=5)
+    ax.plot(nrel_wind_speed, nrel_power, linestyle='None', marker='o', color=red_color, markeredgecolor='black', markersize=5)
+
+    ax.set_xlim(min(nrel_wind_speed), max(nrel_wind_speed))
+    ax.set_xlabel('Wind Speed (m/s)', fontsize=20)
+    ax.set_ylabel('Power (kW)', fontsize=20)
+    ax.set_title('Power vs Wind Speed', fontsize=20)
+    ax.legend(loc='upper right', frameon=True, framealpha=0.7, edgecolor='black', fontsize=20)
+    # ax.set_xlim(min(nrel_wind_speed), max(nrel_wind_speed))
+    # ax.set_ylim(0, 1.2 * max(nrel_power))
+    apply_grid_styling(ax)
+    ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+    ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+    plt.tight_layout()
+    plt.show()
+
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    ax.plot(nrel_wind_speed, nrel_thrust, label='NREL Thrust', color=red_color, linestyle='-', linewidth=3)
+    ax.plot(bem_wind_speed, bem_thrust/1000, label='BEM Thrust', color=blue_color, linestyle='-', linewidth=3)
+    ax.plot(qblade_wind_speed, qblade_thrust/1000, label='QBlade Thrust', color=green_color, linestyle='-', linewidth=3)
+
+    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, bem_wind_speed, bem_thrust/1000),
+            linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
+    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, qblade_wind_speed, qblade_thrust/1000),
+            linestyle='None', marker='o', color=green_color, markeredgecolor='black', markersize=5)
+    ax.plot(nrel_wind_speed, nrel_thrust, linestyle='None', marker='o', color=red_color, markeredgecolor='black', markersize=5)
+
+
+
+    ax.set_xlabel('Wind Speed (m/s)', fontsize=20)
+    ax.set_ylabel('Thrust (kN)', fontsize=20)
+    ax.set_title('Thrust vs Wind Speed', fontsize=20)
+    ax.legend(loc='upper right', frameon=True, framealpha=0.7, edgecolor='black', fontsize=20)
+    # ax.set_xlim(min(nrel_wind_speed), max(nrel_wind_speed))
+    # ax.set_ylim(0, 1.2 * max(nrel_power))
+    apply_grid_styling(ax)
+    ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+    ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+    plt.tight_layout()
+    plt.show()
+
+
+
+
+
+# bem_data = get_bem_data("blade_profile_test.json")
 
 # def plot_
 
@@ -324,6 +455,8 @@ with open(ROOT_DIR / "naca_data" / "blade_profiles" / "blade_profile_test.json",
     data = json.load(f)
 
 
-plot_chord_distribution_with_airfoils((data, R, CHORD))
+plot_blade_with_distribution_info((data, R, CHORD))
 plot_chord_distribution((data, R, CHORD))
 plot_twist_distribution((data, R, BETA))
+
+plot_bem_verification()

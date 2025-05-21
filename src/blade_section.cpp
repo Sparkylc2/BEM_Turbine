@@ -12,6 +12,12 @@ void BladeSection::initialize_blade_section() {
 
     angular_velocity = parent_rotor.g_angular_velocity();
 
+    double W = std::sqrt(parent_rotor.g_wind_speed().value() * parent_rotor.g_wind_speed().value() + (angular_velocity * radial_position).value() * (angular_velocity * radial_position).value());
+    double re = parent_rotor.density.value() * W * chord_length.value() / parent_rotor.dynamic_viscosity.value();
+    double mach = W / parent_rotor.speed_of_sound.value();
+
+
+
     cfg = xf::Config();
     cfg.naca = naca_code;
     if (!coordinate_file.empty()) {
@@ -23,6 +29,8 @@ void BladeSection::initialize_blade_section() {
         }
     }
     cfg.alpha = 0.0_deg;
+    cfg.re = re;
+    cfg.mach = mach;
 
 
 
@@ -44,8 +52,9 @@ void BladeSection::update_alpha(radian_t phi) {
 void BladeSection::update_cl_cd() {
     static std::unordered_map<std::string, xf::Polar> basePolars;
 
+    std::string re = std::to_string(static_cast<int>(cfg.re.value()));
     xf::Polar basePolar;
-    std::string polarName = naca_code.empty() ? coordinate_file : naca_code;
+    std::string polarName = naca_code.empty() ? coordinate_file + re : naca_code;
     auto it = basePolars.find(polarName);
 
     if (it == basePolars.end()) {
