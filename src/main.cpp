@@ -37,25 +37,46 @@ int main() {
     // show();
 
 
+    double tsr_min = 0.0;
+    double tsr_max = 10.0;
 
-
-    double wind_speed_min = 3.0;
-    double wind_speed_max = 25.0;
-    std::vector<double> wind_speed_vec = Helpers::linspace(wind_speed_min, wind_speed_max, 10);
+    std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 10);
     std::vector<double> produced_power_vec;
     std::vector<double> cp_vec;
     std::vector<double> thrust_vec;
+    std::vector<double> torque_vec;
 
-    for (auto wind_speed: wind_speed_vec) {
-        std::cout << "Wind Speed: " << wind_speed << std::endl;
+    for (auto tsr : tsr_vec) {
+        std::cout << "TSR: " << tsr << std::endl;
         Rotor rotor("blade_profile_test");
-        rotor.initialize_rotor(meters_per_second_t(wind_speed));
+        rotor.initialize_rotor(dimensionless_t(tsr));
         rotor.run_bem();
         produced_power_vec.push_back(rotor.g_produced_power().value());
         cp_vec.push_back(rotor.g_c_p().value());
         thrust_vec.push_back(rotor.g_drag().value());
+        torque_vec.push_back(rotor.g_torque().value());
     }
 
+    //
+    //
+    //
+    // double wind_speed_min = 3.0;
+    // double wind_speed_max = 25.0;
+    // std::vector<double> wind_speed_vec = Helpers::linspace(wind_speed_min, wind_speed_max, 10);
+    // std::vector<double> produced_power_vec;
+    // std::vector<double> cp_vec;
+    // std::vector<double> thrust_vec;
+    //
+    // for (auto wind_speed: wind_speed_vec) {
+    //     std::cout << "Wind Speed: " << wind_speed << std::endl;
+    //     Rotor rotor("blade_profile_test");
+    //     rotor.initialize_rotor(meters_per_second_t(wind_speed));
+    //     rotor.run_bem();
+    //     produced_power_vec.push_back(rotor.g_produced_power().value());
+    //     cp_vec.push_back(rotor.g_c_p().value());
+    //     thrust_vec.push_back(rotor.g_drag().value());
+    // }
+    //
 
 
 
@@ -143,11 +164,12 @@ int main() {
     if (!out.is_open()) {
         std::cerr << "Could not open file " << file.str() << std::endl;
     }
-    out << "WIND SPEED (m/s), THRUST (N), PRODUCED POWER (W), C_P" << std::endl;
+    out << "TSR, THRUST (N), TORQUE (NM), PRODUCED POWER (W), C_P" << std::endl;
 
-    for (size_t i = 0; i < wind_speed_vec.size(); i++) {
-        out << wind_speed_vec[i] << ","
+    for (size_t i = 0; i < tsr_vec.size(); i++) {
+        out << tsr_vec[i] << ","
             << thrust_vec[i] << ","
+            << torque_vec[i] << ","
             << produced_power_vec[i] << ","
             << cp_vec[i] << std::endl;
     }
