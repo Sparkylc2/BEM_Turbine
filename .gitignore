@@ -225,3 +225,4 @@ logs/
 # Database files
 *.db
 *.sqlite
+*.bl
