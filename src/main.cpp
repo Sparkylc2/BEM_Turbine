@@ -48,7 +48,7 @@ int main() {
 
     for (auto wind_speed: wind_speed_vec) {
         std::cout << "Wind Speed: " << wind_speed << std::endl;
-        Rotor rotor("NREL_5MW_Blade");
+        Rotor rotor("blade_profile_test");
         rotor.initialize_rotor(meters_per_second_t(wind_speed));
         rotor.run_bem();
         produced_power_vec.push_back(rotor.g_produced_power().value());

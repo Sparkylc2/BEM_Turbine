@@ -344,7 +344,7 @@ def plot_bem_verification():
     nrel_cp = df["Cp [-]"]
     nrel_thrust = df["Thrust [kN]"]
 
-    bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "recent_run.csv")
+    bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_BEM.csv")
     bem_wind_speed = bem_data["WIND SPEED (m/s)"]
     bem_thrust = bem_data[" THRUST (N)"]
     bem_power = bem_data[" PRODUCED POWER (W)"]
