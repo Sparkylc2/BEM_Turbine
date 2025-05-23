@@ -344,11 +344,39 @@ def plot_bem_verification():
     nrel_cp = df["Cp [-]"]
     nrel_thrust = df["Thrust [kN]"]
 
-    bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_BEM.csv")
-    bem_wind_speed = bem_data["WIND SPEED (m/s)"]
-    bem_thrust = bem_data[" THRUST (N)"]
-    bem_power = bem_data[" PRODUCED POWER (W)"]
-    bem_cp = bem_data[" C_P"]
+    # bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_BEM.csv")
+    all_corr_bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_BEM_ALL_CORRECTIONS.csv")
+    all_corr_bem_wind_speed = all_corr_bem_data["WIND SPEED (m/s)"]
+    all_corr_bem_thrust = all_corr_bem_data[" THRUST (N)"]
+    all_corr_bem_power = all_corr_bem_data[" PRODUCED POWER (W)"]
+    all_corr_bem_cp = all_corr_bem_data[" C_P"]
+
+    mach_corr_bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_BEM_MACH_CORRECTION.csv")
+    mach_corr_bem_wind_speed = mach_corr_bem_data["WIND SPEED (m/s)"]
+    mach_corr_bem_thrust = mach_corr_bem_data[" THRUST (N)"]
+    mach_corr_bem_power = mach_corr_bem_data[" PRODUCED POWER (W)"]
+    mach_corr_bem_cp = mach_corr_bem_data[" C_P"]
+
+    stall_corr_bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_BEM_STALL_DELAY_CORR.csv")
+    stall_corr_bem_wind_speed = stall_corr_bem_data["WIND SPEED (m/s)"]
+    stall_corr_bem_thrust = stall_corr_bem_data[" THRUST (N)"]
+    stall_corr_bem_power = stall_corr_bem_data[" PRODUCED POWER (W)"]
+    stall_corr_bem_cp = stall_corr_bem_data[" C_P"]
+
+    tiproot_corr_bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_BEM_TIPROOT_CORRECTION.csv")
+    tiproot_corr_bem_wind_speed = tiproot_corr_bem_data["WIND SPEED (m/s)"]
+    tiproot_corr_bem_thrust = tiproot_corr_bem_data[" THRUST (N)"]
+    tiproot_corr_bem_power = tiproot_corr_bem_data[" PRODUCED POWER (W)"]
+    tiproot_corr_bem_cp = tiproot_corr_bem_data[" C_P"]
+
+    no_corr_bem_data = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "NREL_BEM_NO_CORRECTIONS.csv")
+    no_corr_bem_wind_speed = no_corr_bem_data["WIND SPEED (m/s)"]
+    no_corr_bem_thrust = no_corr_bem_data[" THRUST (N)"]
+    no_corr_bem_power = no_corr_bem_data[" PRODUCED POWER (W)"]
+    no_corr_bem_cp = no_corr_bem_data[" C_P"]
+
+
+
 
     qblade_wind_speed, qblade_cp = parse_qblade_file("cp_v_windspeed.txt")
     qblade_wind_speed, qblade_power = parse_qblade_file("power_v_windspeed.txt")
@@ -361,10 +389,15 @@ def plot_bem_verification():
 
     fig, ax = plt.subplots(figsize=(10, 6.5))
     ax.plot(nrel_wind_speed, nrel_cp, label='NREL $\\text{C}_{\\mathbf{P}}$', color=red_color, linestyle='-', linewidth=3)
-    ax.plot(bem_wind_speed, bem_cp, label='BEM $\\text{C}_{\\mathbf{P}}$', color=blue_color, linestyle='-', linewidth=3)
+    ax.plot(all_corr_bem_wind_speed, all_corr_bem_cp, label='BEM $\\text{C}_{\\mathbf{P}}$', color=blue_color, linestyle='-', linewidth=3)
     ax.plot(qblade_wind_speed, qblade_cp, label='QBlade $\\text{C}_{\\mathbf{P}}$', color=green_color, linestyle='-', linewidth=3)
-    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, bem_wind_speed, bem_cp),
-        linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
+    ax.plot(no_corr_bem_wind_speed, no_corr_bem_cp, label='BEM No Corrections $\\text{C}_{\\mathbf{P}}$', color=yellow_color, linestyle='--', linewidth=1)
+    ax.plot(mach_corr_bem_wind_speed, mach_corr_bem_cp, label='BEM Mach Correction $\\text{C}_{\\mathbf{P}}$', color="blue", linestyle='--', linewidth=1)
+    ax.plot(stall_corr_bem_wind_speed, stall_corr_bem_cp, label='BEM Stall Delay $\\text{C}_{\\mathbf{P}}$', color="purple", linestyle='--', linewidth=1)
+    ax.plot(tiproot_corr_bem_wind_speed, tiproot_corr_bem_cp, label='BEM Tip/Root $\\text{C}_{\\mathbf{P}}$', color="green", linestyle='--', linewidth=1)
+
+    # ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, bem_wind_speed, bem_cp),
+    #     linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
     ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, qblade_wind_speed, qblade_cp),
             linestyle='None', marker='o', color=green_color, markeredgecolor='black', markersize=5)
     ax.plot(nrel_wind_speed, nrel_cp, linestyle='None', marker='o', color=red_color, markeredgecolor='black', markersize=5)
@@ -374,7 +407,7 @@ def plot_bem_verification():
     ax.set_xlabel('Wind Speed (m/s)', fontsize=20)
     ax.set_ylabel('$\\mathbf{C}_{\\mathbf{P}}$', fontsize=20)
     ax.set_title('$\\mathbf{C}_{\\mathbf{P}}$ vs Wind Speed', fontsize=20)
-    ax.legend(loc='upper right', frameon=True, framealpha=0.7, edgecolor='black', fontsize=20)
+    ax.legend(loc='lower left', frameon=True, framealpha=0.7, edgecolor='black', fontsize=16)
 
     ax.set_xlim(min(nrel_wind_speed), max(nrel_wind_speed))
     ax.set_ylim(0, 0.59)
@@ -382,7 +415,30 @@ def plot_bem_verification():
     ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
     plt.tight_layout()
+    plt.savefig("Cp_vs_WindSpeed.png", dpi=300)
     plt.show()
+
+
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    bem_cp_interp = np.interp(nrel_wind_speed, bem_wind_speed, bem_cp)
+    qblade_cp_interp = np.interp(nrel_wind_speed, qblade_wind_speed, qblade_cp)
+    ax.plot(nrel_wind_speed, 100 * np.abs(bem_cp_interp - nrel_cp), label='BEM $\\text{C}_{\\mathbf{P}}$ - NREL $\\text{C}_{\\mathbf{P}}$', color=blue_color, linestyle='-', linewidth=3)
+    ax.plot(nrel_wind_speed, 100 * np.abs(qblade_cp_interp - nrel_cp), label='QBlade $\\text{C}_{\\mathbf{P}}$ - NREL $\\text{C}_{\\mathbf{P}}$', color=green_color, linestyle='-', linewidth=3)
+    ax.set_xlim(7.5, 11.25)
+    ax.set_xlabel('Wind Speed (m/s)', fontsize=20)
+    ax.set_ylabel("$\\mathbf{C}_{\\mathbf{P}}$ Residual ($\\mathbf{\\%}$)", fontsize=20)
+    ax.set_title('$\\mathbf{C}_{\\mathbf{P}}$ Error vs Wind Speed', fontsize=20)
+    ax.legend(loc='upper right', frameon=True, framealpha=0.7, edgecolor='black', fontsize=20)
+    ax.set_ylim(0, 10)
+    apply_grid_styling(ax)
+    ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
+    ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
+    plt.tight_layout()
+    plt.show()
+
+
+
+
 
 
     fig, ax = plt.subplots(figsize=(10, 6.5))

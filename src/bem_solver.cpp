@@ -68,7 +68,7 @@ namespace BEMSolver {
 
 
             /* ----------- KARMAN-TSIEN MACH CORRECTION  ----------- */
-            BEMCorrections::karman_tsein_mach_correction(blade, cl);
+            // BEMCorrections::karman_tsein_mach_correction(blade, cl);
             /* ----------------------------------------------------- */
 
 

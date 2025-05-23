@@ -37,19 +37,24 @@ int main() {
     // show();
 
 
-    double tsr_min = 0.0;
-    double tsr_max = 10.0;
 
-    std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 10);
+
+
+
+
+    double tsr_min = 3;
+    double tsr_max = 25;
+
+    std::vector<double> wind_speed_vec = Helpers::linspace(tsr_min, tsr_max, 100);
     std::vector<double> produced_power_vec;
     std::vector<double> cp_vec;
     std::vector<double> thrust_vec;
     std::vector<double> torque_vec;
 
-    for (auto tsr : tsr_vec) {
+    for (auto tsr : wind_speed_vec) {
         std::cout << "TSR: " << tsr << std::endl;
-        Rotor rotor("blade_profile_test");
-        rotor.initialize_rotor(dimensionless_t(tsr));
+        Rotor rotor("NREL_5MW_Blade");
+        rotor.initialize_rotor(meters_per_second_t(tsr));
         rotor.run_bem();
         produced_power_vec.push_back(rotor.g_produced_power().value());
         cp_vec.push_back(rotor.g_c_p().value());
@@ -57,72 +62,22 @@ int main() {
         torque_vec.push_back(rotor.g_torque().value());
     }
 
-    //
-    //
-    //
-    // double wind_speed_min = 3.0;
-    // double wind_speed_max = 25.0;
-    // std::vector<double> wind_speed_vec = Helpers::linspace(wind_speed_min, wind_speed_max, 10);
-    // std::vector<double> produced_power_vec;
-    // std::vector<double> cp_vec;
-    // std::vector<double> thrust_vec;
-    //
-    // for (auto wind_speed: wind_speed_vec) {
-    //     std::cout << "Wind Speed: " << wind_speed << std::endl;
-    //     Rotor rotor("blade_profile_test");
-    //     rotor.initialize_rotor(meters_per_second_t(wind_speed));
-    //     rotor.run_bem();
-    //     produced_power_vec.push_back(rotor.g_produced_power().value());
-    //     cp_vec.push_back(rotor.g_c_p().value());
-    //     thrust_vec.push_back(rotor.g_drag().value());
-    // }
-    //
+    double max_cp = *std::max_element(cp_vec.begin(), cp_vec.end());
+    double max_cp_index = std::distance(cp_vec.begin(), std::max_element(cp_vec.begin(), cp_vec.end()));
+    std::cout << "Max Cp: " << max_cp << " at TSR: " << wind_speed_vec[max_cp_index] << std::endl;
+    std::cout << "Max Power: " << *std::max_element(produced_power_vec.begin(), produced_power_vec.end()) << std::endl;
+    std::cout << "Max Thrust: " << *std::max_element(thrust_vec.begin(), thrust_vec.end()) << std::endl;
+    std::cout << "Max Torque: " << *std::max_element(torque_vec.begin(), torque_vec.end()) << std::endl;
 
 
-
-
-
-    //
-    // double tsr_min = 3.0;
-    // double tsr_max = 12.0;
-    //
-    // std::vector<double> tsr_vec = Helpers::linspace(tsr_min, tsr_max, 200);
-    //
-    // std::vector<double> produced_power_vec, total_power_vec;
-    // std::vector<double> cp_vec;
-    // std::vector<double> torque_vec;
-    // std::vector<double> drag_vec;
-    //
-    // for (auto tsr: tsr_vec) {
-    //     std::cout << "TSR: " << tsr << std::endl;
-    //     Rotor rotor("NREL_5MW_Blade");
-    //     rotor.initialize_rotor(dimensionless_t(tsr));
-    //
-    //     rotor.run_bem();
-    //     produced_power_vec.push_back(rotor.g_produced_power().value());
-    //     total_power_vec.push_back(rotor.g_total_power().value());
-    //     cp_vec.push_back(rotor.g_c_p().value());
-    //     torque_vec.push_back(rotor.g_torque().value());
-    //     drag_vec.push_back(rotor.g_drag().value());
-    // }
-    //
-    //
-    //
-    // double max_cp = *std::max_element(cp_vec.begin(), cp_vec.end());
-    // auto max_cp_it = std::max_element(cp_vec.begin(), cp_vec.end());
-    // size_t max_cp_index = std::distance(cp_vec.begin(), max_cp_it);
-    // double max_tsr = tsr_vec[max_cp_index];
-    // std::cout << "Max C_p: " << max_cp << " at TSR: " << max_tsr << std::endl;
-    //
-    //
-    // figure();
-    // hold(on);
-    // plot(tsr_vec, cp_vec) -> color("green");
-    // xlabel("Tip-Speed Ratio (TSR)");
-    // ylabel("C_p");
-    // title("C_p vs TSR");
-    // grid(on);
-    // show();
+    figure();
+    hold(on);
+    plot(wind_speed_vec, cp_vec) -> color("green");
+    xlabel("Tip-Speed Ratio (TSR)");
+    ylabel("C_p");
+    title("C_p vs TSR");
+    grid(on);
+    show();
 
     //
     //
@@ -164,10 +119,10 @@ int main() {
     if (!out.is_open()) {
         std::cerr << "Could not open file " << file.str() << std::endl;
     }
-    out << "TSR, THRUST (N), TORQUE (NM), PRODUCED POWER (W), C_P" << std::endl;
+    out << "WIND SPEED (m/s), THRUST (N), TORQUE (NM), PRODUCED POWER (W), C_P" << std::endl;
 
-    for (size_t i = 0; i < tsr_vec.size(); i++) {
-        out << tsr_vec[i] << ","
+    for (size_t i = 0; i < wind_speed_vec.size(); i++) {
+        out << wind_speed_vec[i] << ","
             << thrust_vec[i] << ","
             << torque_vec[i] << ","
             << produced_power_vec[i] << ","

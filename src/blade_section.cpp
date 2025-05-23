@@ -54,7 +54,7 @@ void BladeSection::update_cl_cd() {
 
     std::string re = std::to_string(static_cast<int>(cfg.re.value()));
     xf::Polar basePolar;
-    std::string polarName = naca_code.empty() ? coordinate_file + re : naca_code;
+    std::string polarName = naca_code.empty() ? coordinate_file : naca_code;
     auto it = basePolars.find(polarName);
 
     if (it == basePolars.end()) {
