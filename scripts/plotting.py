@@ -389,15 +389,12 @@ def plot_bem_verification():
 
     fig, ax = plt.subplots(figsize=(10, 6.5))
     ax.plot(nrel_wind_speed, nrel_cp, label='NREL $\\text{C}_{\\mathbf{P}}$', color=red_color, linestyle='-', linewidth=3)
-    ax.plot(all_corr_bem_wind_speed, all_corr_bem_cp, label='BEM $\\text{C}_{\\mathbf{P}}$', color=blue_color, linestyle='-', linewidth=3)
+    ax.plot(tiproot_corr_bem_wind_speed, tiproot_corr_bem_cp, label='BEM $\\text{C}_{\\mathbf{P}}$', color=blue_color, linestyle='-', linewidth=3)
     ax.plot(qblade_wind_speed, qblade_cp, label='QBlade $\\text{C}_{\\mathbf{P}}$', color=green_color, linestyle='-', linewidth=3)
-    ax.plot(no_corr_bem_wind_speed, no_corr_bem_cp, label='BEM No Corrections $\\text{C}_{\\mathbf{P}}$', color=yellow_color, linestyle='--', linewidth=1)
-    ax.plot(mach_corr_bem_wind_speed, mach_corr_bem_cp, label='BEM Mach Correction $\\text{C}_{\\mathbf{P}}$', color="blue", linestyle='--', linewidth=1)
-    ax.plot(stall_corr_bem_wind_speed, stall_corr_bem_cp, label='BEM Stall Delay $\\text{C}_{\\mathbf{P}}$', color="purple", linestyle='--', linewidth=1)
-    ax.plot(tiproot_corr_bem_wind_speed, tiproot_corr_bem_cp, label='BEM Tip/Root $\\text{C}_{\\mathbf{P}}$', color="green", linestyle='--', linewidth=1)
+    ax.plot(no_corr_bem_wind_speed, no_corr_bem_cp, label='BEM No Correction $\\text{C}_{\\mathbf{P}}$', color=yellow_color, linestyle='--', linewidth=3)
 
-    # ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, bem_wind_speed, bem_cp),
-    #     linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
+    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, tiproot_corr_bem_wind_speed, tiproot_corr_bem_cp),
+        linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
     ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, qblade_wind_speed, qblade_cp),
             linestyle='None', marker='o', color=green_color, markeredgecolor='black', markersize=5)
     ax.plot(nrel_wind_speed, nrel_cp, linestyle='None', marker='o', color=red_color, markeredgecolor='black', markersize=5)
@@ -416,11 +413,11 @@ def plot_bem_verification():
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
     plt.tight_layout()
     plt.savefig("Cp_vs_WindSpeed.png", dpi=300)
-    plt.show()
+    # plt.show()
 
 
-    fig, ax = plt.subplots(figsize=(10, 6.5))
-    bem_cp_interp = np.interp(nrel_wind_speed, bem_wind_speed, bem_cp)
+    fig, ax = plt.subplots(figsize=(6.5, 6.5))
+    bem_cp_interp = np.interp(nrel_wind_speed, all_corr_bem_wind_speed, all_corr_bem_cp)
     qblade_cp_interp = np.interp(nrel_wind_speed, qblade_wind_speed, qblade_cp)
     ax.plot(nrel_wind_speed, 100 * np.abs(bem_cp_interp - nrel_cp), label='BEM $\\text{C}_{\\mathbf{P}}$ - NREL $\\text{C}_{\\mathbf{P}}$', color=blue_color, linestyle='-', linewidth=3)
     ax.plot(nrel_wind_speed, 100 * np.abs(qblade_cp_interp - nrel_cp), label='QBlade $\\text{C}_{\\mathbf{P}}$ - NREL $\\text{C}_{\\mathbf{P}}$', color=green_color, linestyle='-', linewidth=3)
@@ -434,61 +431,48 @@ def plot_bem_verification():
     ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
     plt.tight_layout()
-    plt.show()
+    # plt.show()
+    plt.savefig("Cp_vs_WindSpeedError.png", dpi=300)
 
 
 
 
 
+def plot_bem_data():
+    df = pd.read_csv(ROOT_DIR / "naca_data" / "bem_data" / "recent_run.csv")
+
+    tsr = df["TSR"]
+    torque = df[" TORQUE (NM)"]
+    cp = df[" C_P"]
 
     fig, ax = plt.subplots(figsize=(10, 6.5))
-    ax.plot(nrel_wind_speed, nrel_power, label='NREL Power', color=red_color, linestyle='-', linewidth=3)
-    ax.plot(bem_wind_speed, bem_power/1000, label='BEM Power', color=blue_color, linestyle='-', linewidth=3)
-    ax.plot(qblade_wind_speed, qblade_power/1000, label='QBlade Power', color=green_color, linestyle='-', linewidth=3)
-
-    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, bem_wind_speed, bem_power/1000),
-            linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
-    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, qblade_wind_speed, qblade_power/1000),
-            linestyle='None', marker='o', color=green_color, markeredgecolor='black', markersize=5)
-    ax.plot(nrel_wind_speed, nrel_power, linestyle='None', marker='o', color=red_color, markeredgecolor='black', markersize=5)
-
-    ax.set_xlim(min(nrel_wind_speed), max(nrel_wind_speed))
-    ax.set_xlabel('Wind Speed (m/s)', fontsize=20)
-    ax.set_ylabel('Power (kW)', fontsize=20)
-    ax.set_title('Power vs Wind Speed', fontsize=20)
+    ax.plot(tsr, cp, label='BEM $\\text{C}_{\\mathbf{P}}$', color=blue_color, linestyle='-', linewidth=3)
+    ax.set_xlabel('Tip Speed Ratio', fontsize=20)
+    ax.set_ylabel('$\\mathbf{C}_{\\mathbf{P}}$', fontsize=20)
+    ax.set_title('$\\mathbf{C}_{\\mathbf{P}}$ vs Tip Speed Ratio', fontsize=20)
     ax.legend(loc='upper right', frameon=True, framealpha=0.7, edgecolor='black', fontsize=20)
-    # ax.set_xlim(min(nrel_wind_speed), max(nrel_wind_speed))
-    # ax.set_ylim(0, 1.2 * max(nrel_power))
     apply_grid_styling(ax)
+    ax.set_xlim(0, 6)
+    ax.set_ylim(0, 0.59)
     ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
     plt.tight_layout()
-    plt.show()
+    plt.savefig("Cp_vs_TipSpeedBEM.png", dpi=300)
 
     fig, ax = plt.subplots(figsize=(10, 6.5))
-    ax.plot(nrel_wind_speed, nrel_thrust, label='NREL Thrust', color=red_color, linestyle='-', linewidth=3)
-    ax.plot(bem_wind_speed, bem_thrust/1000, label='BEM Thrust', color=blue_color, linestyle='-', linewidth=3)
-    ax.plot(qblade_wind_speed, qblade_thrust/1000, label='QBlade Thrust', color=green_color, linestyle='-', linewidth=3)
-
-    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, bem_wind_speed, bem_thrust/1000),
-            linestyle='None', marker='o', color=blue_color, markeredgecolor='black', markersize=5)
-    ax.plot(nrel_wind_speed, np.interp(nrel_wind_speed, qblade_wind_speed, qblade_thrust/1000),
-            linestyle='None', marker='o', color=green_color, markeredgecolor='black', markersize=5)
-    ax.plot(nrel_wind_speed, nrel_thrust, linestyle='None', marker='o', color=red_color, markeredgecolor='black', markersize=5)
-
-
-
-    ax.set_xlabel('Wind Speed (m/s)', fontsize=20)
-    ax.set_ylabel('Thrust (kN)', fontsize=20)
-    ax.set_title('Thrust vs Wind Speed', fontsize=20)
-    ax.legend(loc='upper right', frameon=True, framealpha=0.7, edgecolor='black', fontsize=20)
-    # ax.set_xlim(min(nrel_wind_speed), max(nrel_wind_speed))
-    # ax.set_ylim(0, 1.2 * max(nrel_power))
+    ax.plot(tsr, torque, label='BEM Torque', color=red_color, linestyle='-', linewidth=3)
+    ax.set_xlabel('Tip Speed Ratio', fontsize=20)
+    ax.set_ylabel('Torque (Nm)', fontsize=20)
+    ax.set_title('Torque vs Tip Speed Ratio', fontsize=20)
+    ax.legend(loc='upper left', frameon=True, framealpha=0.7, edgecolor='black', fontsize=20)
     apply_grid_styling(ax)
+    ax.set_xlim(0, 6)
+    ax.set_ylim(0, max(torque) * 1.1)
     ax.xaxis.set_minor_locator(mticker.AutoMinorLocator())
     ax.yaxis.set_minor_locator(mticker.AutoMinorLocator())
     plt.tight_layout()
-    plt.show()
+    plt.savefig("Torque_vs_TipSpeedBEM.png", dpi=300)
+
 
 
 
@@ -511,8 +495,8 @@ with open(ROOT_DIR / "naca_data" / "blade_profiles" / "blade_profile_test.json",
     data = json.load(f)
 
 
-plot_blade_with_distribution_info((data, R, CHORD))
-plot_chord_distribution((data, R, CHORD))
-plot_twist_distribution((data, R, BETA))
-
+# plot_blade_with_distribution_info((data, R, CHORD))
+# plot_chord_distribution((data, R, CHORD))
+# plot_twist_distribution((data, R, BETA))
+plot_bem_data()
 plot_bem_verification()

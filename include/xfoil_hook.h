@@ -28,7 +28,7 @@ namespace xf {
         degree_t alpha = degree_t(0.0);
         degree_t alpha_neg = degree_t(-6);
         degree_t alpha_pos = degree_t(8.0);
-        degree_t d_alpha = degree_t(0.25);
+        degree_t d_alpha = degree_t(0.5);
         // --- misc -------------------------------------------------------------------
         bool        save_cp  = false;
         std::string tag      = "run";
